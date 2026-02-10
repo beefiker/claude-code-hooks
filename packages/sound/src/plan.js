@@ -1,5 +1,15 @@
-import { intro, multiselect, select, isCancel, cancel, note } from '@clack/prompts';
-import { ansi as pc, configPathForScope, readJsonIfExists } from '@claude-code-hooks/core';
+import {
+  ansi as pc,
+  configPathForScope,
+  readJsonIfExists,
+  t,
+  intro,
+  multiselect,
+  select,
+  isCancel,
+  cancel,
+  note
+} from '@claude-code-hooks/core';
 import {
   HOOK_EVENTS,
   applyMappingsToSettings,
@@ -9,8 +19,8 @@ import {
 import { ensureSoundsLoaded, listSoundsGrouped } from './sounds.js';
 import { selectWithSoundPreview } from './select-with-preview.js';
 
-function dieCancelled(msg = 'Cancelled') {
-  cancel(msg);
+function dieCancelled(msg, locale = 'en') {
+  cancel(msg ?? t('cancelled', locale));
   process.exit(0);
 }
 
@@ -39,14 +49,16 @@ function displaySoundId(soundId, labels) {
   return soundId;
 }
 
-const CATEGORY_OPTIONS = [
-  { value: 'common', label: 'Common' },
-  { value: 'game', label: 'Game' },
-  { value: 'ring', label: 'Ring' },
-  { value: 'custom', label: 'Custom' }
-];
+function categoryOptions(locale) {
+  return [
+    { value: 'common', label: t('soundCommon', locale) },
+    { value: 'game', label: t('soundGame', locale) },
+    { value: 'ring', label: t('soundRing', locale) },
+    { value: 'custom', label: t('soundCustom', locale) }
+  ];
+}
 
-export async function planInteractiveSetup({ action, projectDir, ui = 'standalone' }) {
+export async function planInteractiveSetup({ action, projectDir, ui = 'standalone', locale = 'en' }) {
   if (action === 'uninstall') {
     return {
       key: 'sound',
@@ -58,7 +70,7 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
 
   if (ui !== 'umbrella') {
     intro('sound');
-    note('Pick events and choose a sound for each. (You can keep this minimal.)', '@claude-code-hooks/sound');
+    note(t('soundPickEvents', locale), '@claude-code-hooks/sound');
   }
 
   const baseDir = projectDir || process.cwd();
@@ -77,20 +89,20 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
   const { grouped, labels } = await listSoundsGrouped();
 
   const eventDescs = {
-    SessionStart: 'New session begins',
-    UserPromptSubmit: 'User sends a prompt',
-    PreToolUse: 'Before a tool runs',
-    PermissionRequest: 'Tool asks for permission',
-    PostToolUse: 'After a tool completes',
-    PostToolUseFailure: 'Tool execution failed',
-    Notification: 'Claude sends a notification',
-    SubagentStart: 'Sub-agent spawned',
-    SubagentStop: 'Sub-agent finished',
-    Stop: 'Claude stops responding',
-    TeammateIdle: 'Teammate becomes idle',
-    TaskCompleted: 'Task finished',
-    PreCompact: 'Before context compaction',
-    SessionEnd: 'Session ends'
+    SessionStart: t('sound.ev.SessionStart', locale),
+    UserPromptSubmit: t('sound.ev.UserPromptSubmit', locale),
+    PreToolUse: t('sound.ev.PreToolUse', locale),
+    PermissionRequest: t('sound.ev.PermissionRequest', locale),
+    PostToolUse: t('sound.ev.PostToolUse', locale),
+    PostToolUseFailure: t('sound.ev.PostToolUseFailure', locale),
+    Notification: t('sound.ev.Notification', locale),
+    SubagentStart: t('sound.ev.SubagentStart', locale),
+    SubagentStop: t('sound.ev.SubagentStop', locale),
+    Stop: t('sound.ev.Stop', locale),
+    TeammateIdle: t('sound.ev.TeammateIdle', locale),
+    TaskCompleted: t('sound.ev.TaskCompleted', locale),
+    PreCompact: t('sound.ev.PreCompact', locale),
+    SessionEnd: t('sound.ev.SessionEnd', locale)
   };
 
   /** Build event options (flat list; keep labels short, details in hint). */
@@ -102,7 +114,7 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
       return {
         value: e,
         label: e,
-        hint: `${desc} • inherited: ${disp}`
+        hint: `${desc} • ${t('soundInherited', locale)}: ${disp}`
       };
     }
     return {
@@ -114,39 +126,40 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
 
   note(ui !== 'umbrella'
     ? `Hint shows meaning; “inherited” means already set in ~/.claude/settings.json`
-    : `Hint shows meaning (and inherited)`,
+    : t('soundLegendUmbrella', locale),
   'Legend');
 
   const enabledEvents = await multiselect({
-    message: '[sound] Which events should play sounds?',
+    message: `[sound] ${t('soundWhichEvents', locale)}`,
     options: eventOptions,
     required: false
   });
-  if (isCancel(enabledEvents)) dieCancelled();
+  if (isCancel(enabledEvents)) dieCancelled(undefined, locale);
 
   /** @type {Record<string, string>} */
   const mappings = {};
+  const cats = categoryOptions(locale);
 
   for (const eventName of enabledEvents) {
     // Pick category first (grouped UI)
-    const availableCats = CATEGORY_OPTIONS.filter((c) => (grouped[c.value]?.length ?? 0) > 0);
+    const availableCats = cats.filter((c) => (grouped[c.value]?.length ?? 0) > 0);
 
     const cat = await select({
-      message: `[sound] Category for ${pc.bold(eventName)}`,
+      message: `[sound] ${t('soundCategoryFor', locale)} ${pc.bold(eventName)}`,
       options: availableCats
     });
-    if (isCancel(cat)) dieCancelled();
+    if (isCancel(cat)) dieCancelled(undefined, locale);
 
     const ids = grouped[cat] || [];
 
-    // Show label mainly; fall back to filename.
+    // Show label mainly; fall back to filename. Sound IDs stay as-is (no translation).
     const options = ids.map((id) => ({ value: id, label: displaySoundId(id, labels), hint: labels?.[id] ? id : undefined }));
 
     const soundId = await selectWithSoundPreview({
-      message: `[sound] Sound for ${pc.bold(eventName)}`,
+      message: `[sound] ${t('soundFor', locale)} ${pc.bold(eventName)}`,
       options
     });
-    if (isCancel(soundId)) dieCancelled();
+    if (isCancel(soundId)) dieCancelled(undefined, locale);
     if (soundId) mappings[eventName] = String(soundId);
   }
 
