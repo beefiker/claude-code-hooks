@@ -20,6 +20,7 @@
     "sound": "npm -w @claude-code-hooks/sound --",
     "sound:setup": "node packages/sound/src/cli.js",
     "sound:play": "node packages/sound/src/cli.js play",
+    "notification": "npm -w @claude-code-hooks/notification --",
     "generate:sounds": "npm -w @claude-code-hooks/sound run generate:sounds",
     "test": "npm -ws test --if-present",
     "smoke": "node scripts/smoke-cli.mjs",

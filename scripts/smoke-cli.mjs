@@ -10,5 +10,6 @@ run('node', ['packages/security/src/cli.js', '--help']);
 run('node', ['packages/secrets/src/cli.js', '--help']);
 run('node', ['packages/sound/src/cli.js', '--help']);
 run('node', ['packages/cli/src/cli.js', '--help']);
+run('node', ['packages/notification/src/cli.js', '--help']);
 
 console.log('Smoke OK');

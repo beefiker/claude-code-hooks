@@ -1,0 +1,43 @@
+{
+  "name": "@claude-code-hooks/notification",
+  "version": "0.1.0",
+  "description": "Zero-dependency Claude Code hook handler that sends OS-level notifications (macOS, Linux, Windows).",
+  "license": "MIT",
+  "homepage": "https://github.com/beefiker/claude-code-hooks/tree/main/packages/notification",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beefiker/claude-code-hooks.git",
+    "directory": "packages/notification"
+  },
+  "bugs": {
+    "url": "https://github.com/beefiker/claude-code-hooks/issues"
+  },
+  "type": "module",
+  "bin": {
+    "claude-code-hooks-notification": "src/cli.js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "src"
+  ],
+  "exports": {
+    ".": "./src/notify.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node test/self-check.mjs"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "hooks",
+    "notification",
+    "toast",
+    "osascript",
+    "notify-send"
+  ]
+}
