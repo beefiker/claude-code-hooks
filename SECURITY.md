@@ -15,7 +15,7 @@ We will acknowledge receipt within **48 hours** and aim to provide a fix or miti
 
 | Package | Version | Supported |
 |---------|---------|-----------|
-| claude-sound | 0.2.x | Yes |
+| @claude-code-hooks/sound | 0.2.x | Yes |
 | @claude-code-hooks/security | 0.1.x | Yes |
 | @claude-code-hooks/secrets | 0.1.x | Yes |
 | @claude-code-hooks/core | 0.1.x | Yes |
@@ -36,7 +36,7 @@ Out of scope:
 
 These packages run as **Claude Code hooks** — they execute in your local environment. The security and secrets packages specifically exist to *add* safety layers. Their design principles:
 
-- **No network calls** (except TTS generation in claude-sound, which is opt-in)
+- **No network calls** (except TTS generation in @claude-code-hooks/sound, which is opt-in)
 - **No data exfiltration** — all scanning is local, nothing leaves your machine
 - **Minimal dependencies** — smaller attack surface
 - **Fail-open by default** — in `warn` mode, hooks never block your workflow
@@ -44,7 +44,6 @@ These packages run as **Claude Code hooks** — they execute in your local envir
 ## Disclosure Policy
 
 - We follow [coordinated disclosure](https://en.wikipedia.org/wiki/Coordinated_vulnerability_disclosure).
-- Credit will be given to reporters unless they prefer anonymity.
 
 ---
 
@@ -52,7 +51,7 @@ These packages run as **Claude Code hooks** — they execute in your local envir
 
 ## 취약점 보고
 
-claude-hooks에서 보안 취약점을 발견하면 **공개 이슈를 열지 마세요**.
+claude-code-hooks에서 보안 취약점을 발견하면 **공개 이슈를 열지 마세요**.
 
 대신, 비공개로 보고해 주세요:
 
@@ -79,7 +78,7 @@ claude-hooks에서 보안 취약점을 발견하면 **공개 이슈를 열지 �
 
 이 패키지들은 **Claude Code 훅**으로 실행됩니다 — 로컬 환경에서 실행됩니다. security와 secrets 패키지는 안전 계층을 *추가*하기 위해 존재합니다. 설계 원칙:
 
-- **네트워크 호출 없음** (claude-sound의 TTS 생성 제외, 이는 선택적)
+- **네트워크 호출 없음** (@claude-code-hooks/sound의 TTS 생성 제외, 이는 선택적)
 - **데이터 유출 없음** — 모든 스캔은 로컬에서 수행, 아무것도 외부로 나가지 않음
 - **최소한의 의존성** — 공격 표면 최소화
 - **기본 fail-open** — `warn` 모드에서 훅은 워크플로우를 차단하지 않음
@@ -87,4 +86,3 @@ claude-hooks에서 보안 취약점을 발견하면 **공개 이슈를 열지 �
 ## 공개 정책
 
 - [협조적 공개](https://en.wikipedia.org/wiki/Coordinated_vulnerability_disclosure)를 따릅니다.
-- 보고자가 익명을 원하지 않는 한 크레딧을 드립니다.

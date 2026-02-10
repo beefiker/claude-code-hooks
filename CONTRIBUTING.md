@@ -23,7 +23,7 @@ npm install
 npm install
 
 # Run a command in a specific package
-npm -w claude-sound <command>
+npm -w @claude-code-hooks/sound <command>
 npm -w @claude-code-hooks/security <command>
 npm -w @claude-code-hooks/secrets <command>
 
@@ -70,7 +70,7 @@ By contributing, you agree that your contributions will be licensed under the [M
 
 # 기여 가이드 (한국어)
 
-claude-hooks에 기여해 주셔서 감사합니다! 아래는 시작하는 데 필요한 모든 내용입니다.
+claude-code-hooks에 기여해 주셔서 감사합니다! 아래는 시작하는 데 필요한 모든 내용입니다.
 
 ## 시작하기
 
@@ -93,7 +93,7 @@ npm install
 npm install
 
 # 특정 패키지에서 명령 실행
-npm -w claude-sound <command>
+npm -w @claude-code-hooks/sound <command>
 npm -w @claude-code-hooks/security <command>
 npm -w @claude-code-hooks/secrets <command>
 

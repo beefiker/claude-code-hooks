@@ -6,13 +6,13 @@ Cross-platform CLI (macOS, Windows, Linux) that configures **Claude Code Hooks**
 
 ![claude-sound CLI](assets/images/how-to-use.gif)
 
-- Setup UI: `npx claude-sound@latest`
-- Hook runner: `npx --yes claude-sound@latest play --event <Event> --sound <SoundId> --managed-by claude-sound`
+- Setup UI: `npx @claude-code-hooks/sound@latest`
+- Hook runner: `npx --yes @claude-code-hooks/sound@latest play --event <Event> --sound <SoundId> --managed-by @claude-code-hooks/sound`
 
 ## Install / run
 
 ```bash
-npx claude-sound@latest
+npx @claude-code-hooks/sound@latest
 ```
 
 You’ll be prompted to choose where to write settings:
@@ -34,7 +34,7 @@ claude-sound import <path>   # Import MP3/WAV into ~/.claude-sound/sounds/
 
 ## What gets written
 
-For each configured event, `claude-sound` writes a Claude hook handler like:
+For each configured event, `claude-sound` (installed via `@claude-code-hooks/sound`) writes a Claude hook handler like:
 
 ```json
 {
@@ -45,7 +45,7 @@ For each configured event, `claude-sound` writes a Claude hook handler like:
         "hooks": [
           {
             "type": "command",
-            "command": "npx --yes claude-sound@latest play --event SessionStart --sound ring1 --managed-by claude-sound",
+            "command": "npx --yes @claude-code-hooks/sound@latest play --event SessionStart --sound ring1 --managed-by @claude-code-hooks/sound",
             "async": true,
             "timeout": 5
           }
@@ -56,7 +56,7 @@ For each configured event, `claude-sound` writes a Claude hook handler like:
 }
 ```
 
-`claude-sound` only manages hook handlers whose `command` contains `--managed-by claude-sound`.
+`claude-sound` only manages hook handlers whose `command` contains `--managed-by @claude-code-hooks/sound`.
 
 ## Uninstall / remove hooks
 
@@ -65,7 +65,7 @@ Run the setup again and choose **Remove all claude-sound hooks**, then **Apply**
 Or manually delete any hook handlers whose command contains:
 
 ```
---managed-by claude-sound
+--managed-by @claude-code-hooks/sound
 ```
 
 ## Custom sound order and labels

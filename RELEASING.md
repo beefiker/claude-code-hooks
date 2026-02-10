@@ -19,7 +19,7 @@ While packages are pre-1.0, minor bumps may include breaking changes. After 1.0,
 | `packages/core` | `@claude-code-hooks/core` | No (internal) |
 | `packages/security` | `@claude-code-hooks/security` | Yes |
 | `packages/secrets` | `@claude-code-hooks/secrets` | Yes |
-| `packages/sound` | `claude-sound` | Yes |
+| `packages/sound` | `@claude-code-hooks/sound` | Yes |
 
 `@claude-code-hooks/core` is a workspace dependency only — not published to npm.
 
@@ -36,8 +36,8 @@ npm version patch   # or minor / major
 
 ```bash
 git add .
-git commit -m "release: claude-sound@0.2.6"
-git tag claude-sound@0.2.6
+git commit -m "release: @claude-code-hooks/sound@0.2.6"
+git tag @claude-code-hooks/sound@0.2.6
 ```
 
 3. **Publish** from the package directory:
@@ -65,7 +65,7 @@ git push && git push --tags
 Tags follow the pattern `<package-name>@<version>`:
 
 ```
-claude-sound@0.2.5
+@claude-code-hooks/sound@0.2.5
 @claude-code-hooks/security@0.1.0
 @claude-code-hooks/secrets@0.1.0
 ```
@@ -118,8 +118,8 @@ npm version patch   # 또는 minor / major
 
 ```bash
 git add .
-git commit -m "release: claude-sound@0.2.6"
-git tag claude-sound@0.2.6
+git commit -m "release: @claude-code-hooks/sound@0.2.6"
+git tag @claude-code-hooks/sound@0.2.6
 ```
 
 3. 패키지 디렉토리에서 **배포합니다**:
@@ -147,7 +147,7 @@ git push && git push --tags
 태그는 `<패키지이름>@<버전>` 형식을 따릅니다:
 
 ```
-claude-sound@0.2.5
+@claude-code-hooks/sound@0.2.5
 @claude-code-hooks/security@0.1.0
 @claude-code-hooks/secrets@0.1.0
 ```

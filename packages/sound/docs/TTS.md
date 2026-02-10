@@ -4,7 +4,7 @@ claude-sound lets you create custom sounds from text using **Google Translate TT
 
 ## How to use
 
-1. Run `npx claude-sound@latest`
+1. Run `npx @claude-code-hooks/sound@latest`
 2. Pick an event (e.g. SessionStart)
 3. Choose **Enable & choose sound**
 4. Select **Create my own (text-to-speech)**
