@@ -53,10 +53,15 @@ export async function planInteractiveSetup({ action, projectDir }) {
   });
   if (isCancel(mode)) dieCancelled();
 
+  const eventDescs = {
+    PreToolUse: 'Before a tool runs',
+    PermissionRequest: 'Tool asks for permission'
+  };
+
   const defaultEvents = existingCfg?.enabledEvents || HOOK_EVENTS;
   const enabledEvents = await multiselect({
     message: '[secrets] Which events should be scanned?',
-    options: HOOK_EVENTS.map((e) => ({ value: e, label: e })),
+    options: HOOK_EVENTS.map((e) => ({ value: e, label: `${e} ${pc.dim('—')} ${pc.dim(eventDescs[e] || '')}` })),
     initialValues: defaultEvents.filter((e) => HOOK_EVENTS.includes(e)),
     required: false
   });

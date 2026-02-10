@@ -74,13 +74,31 @@ export async function planInteractiveSetup({ action, projectDir }) {
   await ensureSoundsLoaded();
   const { grouped, labels } = await listSoundsGrouped();
 
+  const eventDescs = {
+    SessionStart: 'New session begins',
+    UserPromptSubmit: 'User sends a prompt',
+    PreToolUse: 'Before a tool runs',
+    PermissionRequest: 'Tool asks for permission',
+    PostToolUse: 'After a tool completes',
+    PostToolUseFailure: 'Tool execution failed',
+    Notification: 'Claude sends a notification',
+    SubagentStart: 'Sub-agent spawned',
+    SubagentStop: 'Sub-agent finished',
+    Stop: 'Claude stops responding',
+    TeammateIdle: 'Teammate becomes idle',
+    TaskCompleted: 'Task finished',
+    PreCompact: 'Before context compaction',
+    SessionEnd: 'Session ends'
+  };
+
   const eventOptions = HOOK_EVENTS.map((e) => {
+    const desc = eventDescs[e] || '';
     const inheritedId = inherited[e];
     if (inheritedId) {
       const disp = displaySoundId(inheritedId, labels);
-      return { value: e, label: `${e}  ${pc.dim('→')}  ${pc.gray(disp)}  ${pc.dim('(inherited)')}` };
+      return { value: e, label: `${e} ${pc.dim('—')} ${pc.dim(desc)}  ${pc.dim('→')} ${pc.gray(disp)} ${pc.dim('(inherited)')}` };
     }
-    return { value: e, label: e };
+    return { value: e, label: `${e} ${pc.dim('—')} ${pc.dim(desc)}` };
   });
 
   const enabledEvents = await multiselect({

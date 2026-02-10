@@ -105,9 +105,9 @@ async function main() {
   const selected = await multiselect({
     message: action === 'setup' ? 'Which packages do you want to enable?' : 'Which packages do you want to uninstall?',
     options: [
-      { value: 'security', label: '@claude-code-hooks/security' },
-      { value: 'secrets', label: '@claude-code-hooks/secrets' },
-      { value: 'sound', label: '@claude-code-hooks/sound' }
+      { value: 'security', label: '@claude-code-hooks/security', hint: 'Warn/block risky commands' },
+      { value: 'secrets', label: '@claude-code-hooks/secrets', hint: 'Detect secret-like tokens' },
+      { value: 'sound', label: '@claude-code-hooks/sound', hint: 'Play sounds on events' }
     ],
     required: true
   });
@@ -120,9 +120,24 @@ async function main() {
     sound: null
   };
 
-  if (selected.includes('security')) perPackage.security = await planSecuritySetup({ action, projectDir });
-  if (selected.includes('secrets')) perPackage.secrets = await planSecretsSetup({ action, projectDir });
-  if (selected.includes('sound')) perPackage.sound = await planSoundSetup({ action, projectDir });
+  const packageNotes = {
+    security: { setup: 'Scans tool calls for risky shell commands and flags or blocks them.', uninstall: 'Removing security hooks from settings.' },
+    secrets: { setup: 'Inspects tool input for API keys, tokens, and private key material.', uninstall: 'Removing secrets hooks from settings.' },
+    sound: { setup: 'Plays short audio cues when Claude triggers hook events.', uninstall: 'Removing sound hooks from settings.' }
+  };
+
+  if (selected.includes('security')) {
+    note(packageNotes.security[action], 'security');
+    perPackage.security = await planSecuritySetup({ action, projectDir });
+  }
+  if (selected.includes('secrets')) {
+    note(packageNotes.secrets[action], 'secrets');
+    perPackage.secrets = await planSecretsSetup({ action, projectDir });
+  }
+  if (selected.includes('sound')) {
+    note(packageNotes.sound[action], 'sound');
+    perPackage.sound = await planSoundSetup({ action, projectDir });
+  }
 
   // Review summary
   const files = [];
