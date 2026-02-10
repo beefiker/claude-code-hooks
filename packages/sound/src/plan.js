@@ -102,20 +102,31 @@ export async function planInteractiveSetup({ action, projectDir }) {
   /** Build grouped options with disabled section headers. */
   const eventOptions = [];
   for (const section of EVENT_SECTIONS) {
-    eventOptions.push({ value: `__hdr_${section.header}`, label: pc.dim(pc.bold(section.header)), disabled: true });
+    const hdr = String(section.header || '').toUpperCase();
+    eventOptions.push({ value: `__hdr_${hdr}`, label: pc.dim(pc.bold(hdr)), disabled: true });
+
     for (const e of section.events) {
       const desc = eventDescs[e] || '';
       const inheritedId = inherited[e];
+
       if (inheritedId) {
         const disp = displaySoundId(inheritedId, labels);
-        eventOptions.push({ value: e, label: `${e} ${pc.dim('—')} ${pc.dim(desc)}  ${pc.dim('→')} ${pc.gray(disp)} ${pc.dim('(inherited)')}` });
+        eventOptions.push({
+          value: e,
+          label: e,
+          hint: `${desc} • inherited: ${disp}`
+        });
       } else {
-        eventOptions.push({ value: e, label: `${e} ${pc.dim('—')} ${pc.dim(desc)}` });
+        eventOptions.push({
+          value: e,
+          label: e,
+          hint: desc
+        });
       }
     }
   }
 
-  note(`${pc.dim('→')} = inherited from global config (already active, no need to re-select)`, 'Legend');
+  note(`Inherited = already set in ~/.claude/settings.json`, 'Legend');
 
   const enabledEvents = await multiselect({
     message: '[sound] Which events should play sounds?',
