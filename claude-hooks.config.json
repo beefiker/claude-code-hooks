@@ -13,5 +13,23 @@
         "node_modules"
       ]
     }
+  },
+  "secrets": {
+    "mode": "warn",
+    "enabledEvents": [
+      "PreToolUse",
+      "PermissionRequest"
+    ],
+    "ignore": {
+      "regex": []
+    },
+    "allow": {
+      "regex": []
+    }
+  },
+  "sound": {
+    "mappings": {
+      "SessionStart": "common/pop"
+    }
   }
 }
