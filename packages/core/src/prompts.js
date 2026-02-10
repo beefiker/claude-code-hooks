@@ -122,63 +122,43 @@ function setupRawMode(onKey) {
   };
 
   const onData = (chunk) => {
-    // Arrow keys may arrive as a full escape sequence in one chunk ("\x1b[A"),
-    // or split across chunks ("\x1b" then "[A"). Also, multiple sequences can
-    // arrive together. So parse as a small stream.
-    let s = String(chunk);
+    const s = String(chunk);
 
-    // If we were in the middle of an escape sequence, prepend it.
     if (escBuffer) {
-      s = escBuffer + s;
-      escBuffer = '';
-    }
-
-    // Fast path: handle common sequences anywhere in the chunk.
-    // (We still fall back to per-char scanning below.)
-    if (s.includes('\x1b[A') || s.includes('\x1bOA')) {
-      // handle each occurrence via scanning; don't early return
-    }
-
-    for (let i = 0; i < s.length; i++) {
-      const ch = s[i];
-
-      // Enter
-      if (ch === '\r' || ch === '\n') {
-        onKey('enter');
-        continue;
-      }
-
-      // Space
-      if (ch === ' ') {
-        onKey('space');
-        continue;
-      }
-
-      // Escape / arrows
-      if (ch === '\x1b') {
-        // If we have enough chars in this chunk, try to parse arrow.
-        const rest = s.slice(i);
-        if (rest.startsWith('\x1b[A') || rest.startsWith('\x1bOA')) {
-          onKey('up');
-          i += rest.startsWith('\x1bO') ? 2 : 2;
-          continue;
-        }
-        if (rest.startsWith('\x1b[B') || rest.startsWith('\x1bOB')) {
-          onKey('down');
-          i += rest.startsWith('\x1bO') ? 2 : 2;
-          continue;
-        }
-
-        // Incomplete escape sequence: buffer the remainder and flush as ESC if it
-        // doesn't become an arrow quickly.
-        escBuffer = rest;
-        if (escTimer) clearTimeout(escTimer);
-        escTimer = setTimeout(() => {
-          escTimer = null;
-          flushEsc();
-        }, 50);
+      escBuffer += s;
+      if (escBuffer === '\x1b[A' || escBuffer === '\x1bOA') {
+        onKey('up');
+        escBuffer = '';
         return;
       }
+      if (escBuffer === '\x1b[B' || escBuffer === '\x1bOB') {
+        onKey('down');
+        escBuffer = '';
+        return;
+      }
+      if (escBuffer.length >= 2) {
+        flushEsc();
+        return;
+      }
+      return;
+    }
+
+    if (s === '\x1b') {
+      escBuffer = '\x1b';
+      escTimer = setTimeout(() => {
+        escTimer = null;
+        flushEsc();
+      }, 50);
+      return;
+    }
+
+    if (s === '\r' || s === '\n') {
+      onKey('enter');
+      return;
+    }
+    if (s === ' ') {
+      onKey('space');
+      return;
     }
   };
 
