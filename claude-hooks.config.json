@@ -1,0 +1,17 @@
+{
+  "security": {
+    "mode": "warn",
+    "enabledEvents": [
+      "PreToolUse",
+      "PermissionRequest"
+    ],
+    "ignore": {
+      "regex": []
+    },
+    "allow": {
+      "regex": [
+        "node_modules"
+      ]
+    }
+  }
+}

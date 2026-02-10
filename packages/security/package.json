@@ -1,0 +1,36 @@
+{
+  "name": "@claude-hooks/security",
+  "version": "0.1.0",
+  "description": "Claude Code hook that warns or blocks risky shell commands and tool invocations.",
+  "license": "MIT",
+  "homepage": "https://github.com/beefiker/claude-hooks/tree/main/packages/security",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beefiker/claude-hooks.git",
+    "directory": "packages/security"
+  },
+  "bugs": {
+    "url": "https://github.com/beefiker/claude-hooks/issues"
+  },
+  "type": "module",
+  "bin": {
+    "claude-security": "./src/cli.js"
+  },
+  "files": [
+    "src"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.0.0",
+    "@claude-hooks/core": "0.1.0"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "hooks",
+    "security",
+    "guardrails"
+  ]
+}

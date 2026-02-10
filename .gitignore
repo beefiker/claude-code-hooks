@@ -1,0 +1,29 @@
+# Node
+node_modules/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+
+# Claude settings / local state
+.claude/
+**/.claude/settings.local.json
+
+# OpenClaw workspace artifacts (just in case)
+.openclaw/
+
+# Editor
+.vscode/
+.idea/
+
+# Backups
+*_BACKUP*
+_nested-git-backups/
+
+# Optional: local config examples that may include personal prefs
+# (keep tracked if you want; uncomment to ignore)
+# claude-hooks.config.json

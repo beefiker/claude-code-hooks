@@ -1,0 +1,31 @@
+{
+  "name": "claude-hooks",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Monorepo of scoped hook packages for Claude Code (safety, comfort, UX).",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beefiker/claude-hooks.git"
+  },
+  "homepage": "https://github.com/beefiker/claude-hooks",
+  "bugs": {
+    "url": "https://github.com/beefiker/claude-hooks/issues"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "-": "echo 'Root workspace. Run npm -w <workspace> <script>.'",
+    "sound": "npm -w claude-sound --",
+    "sound:setup": "node packages/sound/src/cli.js",
+    "sound:play": "node packages/sound/src/cli.js play",
+    "generate:sounds": "npm -w claude-sound run generate:sounds",
+    "test": "npm -ws test --if-present",
+    "lint": "npm -ws lint --if-present",
+    "prepack": "npm -ws prepack --if-present"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

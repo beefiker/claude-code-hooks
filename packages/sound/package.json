@@ -1,0 +1,42 @@
+{
+  "name": "claude-sound",
+  "version": "0.2.5",
+  "description": "Configure Claude Code hooks to play bundled sounds (macOS, Windows, Linux).",
+  "license": "MIT",
+  "homepage": "https://github.com/beefiker/claude-hooks/tree/main/packages/sound",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beefiker/claude-hooks.git",
+    "directory": "packages/sound"
+  },
+  "bugs": {
+    "url": "https://github.com/beefiker/claude-hooks/issues"
+  },
+  "type": "module",
+  "bin": {
+    "claude-sound": "./src/cli.js"
+  },
+  "files": [
+    "src",
+    "assets"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "generate:sounds": "node ./scripts/generate-sounds.mjs",
+    "prepack": "npm run generate:sounds"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.0.0",
+    "@clack/core": "^1.0.0",
+    "@claude-hooks/core": "0.1.0"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "hooks",
+    "audio",
+    "notifications"
+  ]
+}

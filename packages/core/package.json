@@ -1,0 +1,26 @@
+{
+  "name": "@claude-hooks/core",
+  "version": "0.1.0",
+  "description": "Zero-dependency shared utilities for claude-hooks packages.",
+  "license": "MIT",
+  "homepage": "https://github.com/beefiker/claude-hooks/tree/main/packages/core",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beefiker/claude-hooks.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/beefiker/claude-hooks/issues"
+  },
+  "keywords": ["claude", "claude-code", "hooks", "tooling"],
+  "type": "module",
+  "files": [
+    "src"
+  ],
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
