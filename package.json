@@ -17,10 +17,10 @@
   ],
   "scripts": {
     "-": "echo 'Root workspace. Run npm -w <workspace> <script>.'",
-    "sound": "npm -w claude-sound --",
+    "sound": "npm -w @claude-code-hooks/sound --",
     "sound:setup": "node packages/sound/src/cli.js",
     "sound:play": "node packages/sound/src/cli.js play",
-    "generate:sounds": "npm -w claude-sound run generate:sounds",
+    "generate:sounds": "npm -w @claude-code-hooks/sound run generate:sounds",
     "test": "npm -ws test --if-present",
     "lint": "npm -ws lint --if-present",
     "prepack": "npm -ws prepack --if-present"

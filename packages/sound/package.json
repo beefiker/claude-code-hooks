@@ -1,5 +1,5 @@
 {
-  "name": "claude-sound",
+  "name": "@claude-code-hooks/sound",
   "version": "0.2.6",
   "description": "Configure Claude Code hooks to play bundled sounds (macOS, Windows, Linux).",
   "license": "MIT",
