@@ -18,3 +18,4 @@ export {
 } from './claude-settings.js';
 
 export { SCOPE_OPTIONS, applyManagedHandlersForEvents, upsertConfigSection } from './setup-flow.js';
+export { createPlan, addChange, mergePlans, applyPlan } from './plan.js';

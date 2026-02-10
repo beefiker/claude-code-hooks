@@ -1,0 +1,218 @@
+#!/usr/bin/env node
+
+import process from 'node:process';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
+import {
+  intro,
+  outro,
+  select,
+  multiselect,
+  confirm,
+  isCancel,
+  cancel,
+  note,
+  spinner
+} from '@clack/prompts';
+
+import {
+  ansi as pc,
+  configPathForScope,
+  readJsonIfExists,
+  writeJson,
+  CONFIG_FILENAME,
+  configFilePath,
+  readProjectConfig,
+  writeProjectConfig
+} from '@claude-code-hooks/core';
+
+import { buildSettingsSnippet } from './snippet.js';
+
+// In-workspace imports (when running from monorepo) and normal Node resolution
+// (when installed from npm) both resolve these packages.
+import { planInteractiveSetup as planSecuritySetup } from '@claude-code-hooks/security/src/plan.js';
+import { planInteractiveSetup as planSecretsSetup } from '@claude-code-hooks/secrets/src/plan.js';
+import { planInteractiveSetup as planSoundSetup } from '@claude-code-hooks/sound/src/plan.js';
+
+function dieCancelled(msg = 'Cancelled') {
+  cancel(msg);
+  process.exit(0);
+}
+
+function usage(exitCode = 0) {
+  process.stdout.write(`\
+claude-code-hooks\n\nUsage:\n  npx @claude-code-hooks/cli@latest\n\nNotes:\n  - This wizard can update your Claude Code settings (global) or generate project-only config + snippet.\n`);
+  process.exit(exitCode);
+}
+
+async function ensureProjectOnlyConfig(projectDir, selected, perPackageConfig) {
+  const cfgRes = await readProjectConfig(projectDir);
+  const rawCfg = cfgRes.ok ? { ...(cfgRes.value || {}) } : {};
+
+  // Our existing project config format is sectioned by package key.
+  // Keep only what we touch, preserve others.
+  const out = { ...rawCfg };
+
+  if (selected.includes('security') && perPackageConfig.security) out.security = perPackageConfig.security;
+  if (selected.includes('secrets') && perPackageConfig.secrets) out.secrets = perPackageConfig.secrets;
+  if (selected.includes('sound') && perPackageConfig.sound) out.sound = perPackageConfig.sound;
+
+  await writeProjectConfig(out, projectDir);
+  return out;
+}
+
+async function maybeWriteSnippet(projectDir, snippetObj) {
+  const ok = await confirm({
+    message: `Write snippet file to ${pc.bold(path.join(projectDir, 'claude-hooks.snippet.json'))}?`,
+    initialValue: false
+  });
+  if (isCancel(ok)) return;
+  if (!ok) return;
+
+  const filePath = path.join(projectDir, 'claude-hooks.snippet.json');
+  await fs.writeFile(filePath, JSON.stringify(snippetObj, null, 2) + '\n');
+  note(filePath, 'Wrote snippet');
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+  if (args.includes('-h') || args.includes('--help')) usage(0);
+
+  const projectDir = process.cwd();
+
+  intro('claude-code-hooks');
+
+  const action = await select({
+    message: 'What do you want to do?',
+    options: [
+      { value: 'setup', label: 'Setup / enable packages' },
+      { value: 'uninstall', label: 'Uninstall / remove managed hooks' },
+      { value: 'exit', label: 'Exit' }
+    ]
+  });
+  if (isCancel(action) || action === 'exit') dieCancelled('Bye');
+
+  const target = await select({
+    message: 'Where do you want to apply changes?',
+    options: [
+      { value: 'global', label: `Global (default): ${pc.dim('~/.claude/settings.json')}` },
+      { value: 'projectOnly', label: `Project-only: write ${pc.bold(CONFIG_FILENAME)} + print snippet` }
+    ]
+  });
+  if (isCancel(target)) dieCancelled();
+
+  const selected = await multiselect({
+    message: action === 'setup' ? 'Which packages do you want to enable?' : 'Which packages do you want to uninstall?',
+    options: [
+      { value: 'security', label: '@claude-code-hooks/security' },
+      { value: 'secrets', label: '@claude-code-hooks/secrets' },
+      { value: 'sound', label: '@claude-code-hooks/sound' }
+    ],
+    required: true
+  });
+  if (isCancel(selected)) dieCancelled();
+
+  // Build per-package plan/config
+  const perPackage = {
+    security: null,
+    secrets: null,
+    sound: null
+  };
+
+  if (selected.includes('security')) perPackage.security = await planSecuritySetup({ action, projectDir });
+  if (selected.includes('secrets')) perPackage.secrets = await planSecretsSetup({ action, projectDir });
+  if (selected.includes('sound')) perPackage.sound = await planSoundSetup({ action, projectDir });
+
+  // Review summary
+  const files = [];
+  if (target === 'global') files.push(configPathForScope('global', projectDir));
+  if (target === 'projectOnly') {
+    files.push(path.join(projectDir, CONFIG_FILENAME));
+    files.push(path.join(projectDir, 'claude-hooks.snippet.json (optional)'));
+  }
+
+  note(
+    [
+      `Action: ${pc.bold(action)}`,
+      `Target: ${pc.bold(target === 'global' ? 'global settings' : 'project-only')}`,
+      `Packages: ${pc.bold(selected.join(', '))}`,
+      `Files:`,
+      ...files.map((f) => `  - ${f}`)
+    ].join('\n'),
+    'Review'
+  );
+
+  const ok = await confirm({ message: 'Apply?', initialValue: true });
+  if (isCancel(ok) || !ok) dieCancelled('No changes written');
+
+  if (target === 'projectOnly') {
+    // Write project config
+    const s = spinner();
+    s.start('Writing project config...');
+
+    // perPackage.*.projectConfigSection is shaped for claude-hooks.config.json sections.
+    const projectCfg = await ensureProjectOnlyConfig(projectDir, selected, {
+      security: perPackage.security?.projectConfigSection,
+      secrets: perPackage.secrets?.projectConfigSection,
+      sound: perPackage.sound?.projectConfigSection
+    });
+
+    // Print snippet for user to paste into global settings.
+    const snippetObj = buildSettingsSnippet({
+      projectDir,
+      selected,
+      packagePlans: {
+        security: perPackage.security,
+        secrets: perPackage.secrets,
+        sound: perPackage.sound
+      }
+    });
+
+    s.stop('Done');
+
+    note(JSON.stringify(snippetObj, null, 2), 'Paste into ~/.claude/settings.json');
+    await maybeWriteSnippet(projectDir, snippetObj);
+
+    outro(`Project config written: ${pc.bold(configFilePath(projectDir))}`);
+    return;
+  }
+
+  // Global apply: read settings.json, apply transforms, write once.
+  const settingsPath = configPathForScope('global', projectDir);
+  const res = await readJsonIfExists(settingsPath);
+  if (!res.ok) {
+    cancel(`Could not read/parse JSON at ${settingsPath}`);
+    process.exit(1);
+  }
+
+  let settings = res.value;
+
+  const s = spinner();
+  s.start('Applying changes to global settings...');
+
+  for (const key of selected) {
+    const plan = perPackage[key];
+    if (!plan) continue;
+    settings = await plan.applyToSettings(settings);
+  }
+
+  await writeJson(settingsPath, settings);
+
+  // Update project config only on setup.
+  if (action === 'setup') {
+    await ensureProjectOnlyConfig(projectDir, selected, {
+      security: perPackage.security?.projectConfigSection,
+      secrets: perPackage.secrets?.projectConfigSection,
+      sound: perPackage.sound?.projectConfigSection
+    });
+  }
+
+  s.stop('Done');
+  outro(`Saved: ${pc.bold(settingsPath)}`);
+}
+
+main().catch((err) => {
+  process.stderr.write(String(err?.stack || err) + '\n');
+  process.exit(1);
+});

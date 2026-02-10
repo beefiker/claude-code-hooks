@@ -44,7 +44,7 @@ export async function writeJson(filePath, obj) {
   await fs.writeFile(filePath, text);
 }
 
-const MANAGED_TOKEN = '--managed-by claude-sound';
+const MANAGED_TOKEN = '--managed-by @claude-code-hooks/sound';
 
 /** Alphanumeric, slash, hyphen, underscore only (e.g. ring1, common/pop, custom/hello-abc123). */
 const SAFE_SOUND_ID = /^[a-zA-Z0-9/_-]+$/;
@@ -72,7 +72,7 @@ export function buildManagedCommand({ eventName, soundId }) {
   validateSoundId(soundId);
   // Use --yes to avoid prompts in hook context.
   // Keep args stable so we can parse back.
-  return `npx --yes claude-sound@latest play --event ${eventName} --sound ${soundId} ${MANAGED_TOKEN}`;
+  return `npx --yes @claude-code-hooks/sound@latest play --event ${eventName} --sound ${soundId} ${MANAGED_TOKEN}`;
 }
 
 export function extractManagedSoundId(command) {

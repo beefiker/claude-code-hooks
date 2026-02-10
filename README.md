@@ -4,16 +4,25 @@ A monorepo for Claude Code hook tooling: small, composable packages that make Cl
 
 Right now this repo contains:
 
-- `packages/sound` → **claude-sound**: configure Claude Code hooks to play notification sounds.
+- `packages/cli` → **@claude-code-hooks/cli**: umbrella wizard to setup/uninstall hook packages.
+- `packages/sound` → **@claude-code-hooks/sound**: configure Claude Code hooks to play notification sounds.
 - `packages/security` → **@claude-code-hooks/security**: warn/block risky commands and tool invocations.
 - `packages/secrets` → **@claude-code-hooks/secrets**: warn/block secret-like tokens (keys, private keys) in tool inputs.
+
+## Install / run (wizard)
+
+From anywhere:
+
+```bash
+npx @claude-code-hooks/cli@latest
+```
 
 ## Install / run (sound)
 
 From anywhere:
 
 ```bash
-npx claude-sound@latest
+npx @claude-code-hooks/sound@latest
 ```
 
 From this repo (workspace dev):
@@ -23,7 +32,7 @@ cd claude-hooks
 npm install
 
 # run the interactive setup UI
-npm -w claude-sound start --if-present || node packages/sound/src/cli.js
+node packages/sound/src/cli.js
 ```
 
 ## Workspace structure
@@ -46,4 +55,4 @@ npm -w claude-sound start --if-present || node packages/sound/src/cli.js
 ## Publishing philosophy
 
 Even though we’re using a monorepo layout, we keep **backwards compatibility** for users as a hard rule.
-For example, the sound package remains published as `claude-sound` so existing hook commands like `npx claude-sound@latest ...` keep working.
+In practice: we keep the CLI commands stable (bins like `claude-security`, `claude-secrets`, `claude-sound`) and provide a single umbrella wizard (`npx @claude-code-hooks/cli@latest`).
