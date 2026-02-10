@@ -92,17 +92,17 @@ export async function planInteractiveSetup({ action, projectDir }) {
   };
 
   const EVENT_SECTIONS = [
-    { header: '── Session ──', events: ['SessionStart', 'UserPromptSubmit', 'Stop', 'SessionEnd'] },
-    { header: '── Tooling ──', events: ['PreToolUse', 'PermissionRequest', 'PostToolUse', 'PostToolUseFailure'] },
-    { header: '── Notifications ──', events: ['Notification'] },
-    { header: '── Agents ──', events: ['SubagentStart', 'SubagentStop', 'TeammateIdle'] },
-    { header: '── Other ──', events: ['TaskCompleted', 'PreCompact'] }
+    { header: 'Session', events: ['SessionStart', 'UserPromptSubmit', 'Stop', 'SessionEnd'] },
+    { header: 'Tooling', events: ['PreToolUse', 'PermissionRequest', 'PostToolUse', 'PostToolUseFailure'] },
+    { header: 'Notifications', events: ['Notification'] },
+    { header: 'Agents', events: ['SubagentStart', 'SubagentStop', 'TeammateIdle'] },
+    { header: 'Other', events: ['TaskCompleted', 'PreCompact'] }
   ];
 
   /** Build grouped options with disabled section headers. */
   const eventOptions = [];
   for (const section of EVENT_SECTIONS) {
-    eventOptions.push({ value: `__hdr_${section.header}`, label: section.header, disabled: true });
+    eventOptions.push({ value: `__hdr_${section.header}`, label: pc.dim(pc.bold(section.header)), disabled: true });
     for (const e of section.events) {
       const desc = eventDescs[e] || '';
       const inheritedId = inherited[e];
