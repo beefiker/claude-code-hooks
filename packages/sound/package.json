@@ -14,7 +14,10 @@
   },
   "type": "module",
   "bin": {
-    "claude-sound": "./src/cli.js"
+    "claude-sound": "src/cli.js"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "files": [
     "src",
