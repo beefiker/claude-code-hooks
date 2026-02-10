@@ -23,7 +23,9 @@
     "src"
   ],
   "exports": {
-    ".": "./src/notify.js"
+    ".": "./src/notify.js",
+    "./src/plan.js": "./src/plan.js",
+    "./src/hooks.js": "./src/hooks.js"
   },
   "engines": {
     "node": ">=18"

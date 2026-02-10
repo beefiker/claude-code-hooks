@@ -34,6 +34,7 @@ import { buildSettingsSnippet } from './snippet.js';
 import { planInteractiveSetup as planSecuritySetup } from '@claude-code-hooks/security/src/plan.js';
 import { planInteractiveSetup as planSecretsSetup } from '@claude-code-hooks/secrets/src/plan.js';
 import { planInteractiveSetup as planSoundSetup } from '@claude-code-hooks/sound/src/plan.js';
+import { planInteractiveSetup as planNotificationSetup } from '@claude-code-hooks/notification/src/plan.js';
 
 function dieCancelled(msg = 'Cancelled') {
   cancel(msg);
@@ -57,6 +58,7 @@ async function ensureProjectOnlyConfig(projectDir, selected, perPackageConfig) {
   if (selected.includes('security') && perPackageConfig.security) out.security = perPackageConfig.security;
   if (selected.includes('secrets') && perPackageConfig.secrets) out.secrets = perPackageConfig.secrets;
   if (selected.includes('sound') && perPackageConfig.sound) out.sound = perPackageConfig.sound;
+  if (selected.includes('notification') && perPackageConfig.notification) out.notification = perPackageConfig.notification;
 
   await writeProjectConfig(out, projectDir);
   return out;
@@ -115,7 +117,8 @@ async function main() {
       options: [
         { value: 'security', label: '@claude-code-hooks/security', hint: 'Warn/block risky commands' },
         { value: 'secrets', label: '@claude-code-hooks/secrets', hint: 'Detect secret-like tokens' },
-        { value: 'sound', label: '@claude-code-hooks/sound', hint: 'Play sounds on events' }
+        { value: 'sound', label: '@claude-code-hooks/sound', hint: 'Play sounds on events' },
+        { value: 'notification', label: '@claude-code-hooks/notification', hint: 'OS notifications on events' }
       ],
       required: true
     });
@@ -129,17 +132,18 @@ async function main() {
   }
 
   // Build per-package plan/config
-  const perPackage = { security: null, secrets: null, sound: null };
+  const perPackage = { security: null, secrets: null, sound: null, notification: null };
 
   // ── Step 4/5: configure ──
   note(
-    selected.map((k) => `${pc.bold(k)}: ${pc.dim({ security: 'Warn/block risky commands', secrets: 'Detect secret-like tokens', sound: 'Play sounds on events' }[k] || '')}`).join('\n'),
+    selected.map((k) => `${pc.bold(k)}: ${pc.dim({ security: 'Warn/block risky commands', secrets: 'Detect secret-like tokens', sound: 'Play sounds on events', notification: 'OS notifications on events' }[k] || '')}`).join('\n'),
     `${pc.dim('Step 4/5')}  Configure`
   );
 
   if (selected.includes('security')) perPackage.security = await planSecuritySetup({ action, projectDir, ui: 'umbrella' });
   if (selected.includes('secrets')) perPackage.secrets = await planSecretsSetup({ action, projectDir, ui: 'umbrella' });
   if (selected.includes('sound')) perPackage.sound = await planSoundSetup({ action, projectDir, ui: 'umbrella' });
+  if (selected.includes('notification')) perPackage.notification = await planNotificationSetup({ action, projectDir, ui: 'umbrella' });
 
   // ── Step 5/5: review ──
   const files = [];
@@ -187,7 +191,8 @@ async function main() {
     const projectCfg = await ensureProjectOnlyConfig(projectDir, selected, {
       security: perPackage.security?.projectConfigSection,
       secrets: perPackage.secrets?.projectConfigSection,
-      sound: perPackage.sound?.projectConfigSection
+      sound: perPackage.sound?.projectConfigSection,
+      notification: perPackage.notification?.projectConfigSection
     });
 
     // Print snippet for user to paste into global settings.
@@ -197,7 +202,8 @@ async function main() {
       packagePlans: {
         security: perPackage.security,
         secrets: perPackage.secrets,
-        sound: perPackage.sound
+        sound: perPackage.sound,
+        notification: perPackage.notification
       }
     });
 
@@ -236,7 +242,8 @@ async function main() {
     await ensureProjectOnlyConfig(projectDir, selected, {
       security: perPackage.security?.projectConfigSection,
       secrets: perPackage.secrets?.projectConfigSection,
-      sound: perPackage.sound?.projectConfigSection
+      sound: perPackage.sound?.projectConfigSection,
+      notification: perPackage.notification?.projectConfigSection
     });
   }
 
