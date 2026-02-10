@@ -120,24 +120,20 @@ async function main() {
     sound: null
   };
 
-  const packageNotes = {
-    security: { setup: 'Scans tool calls for risky shell commands and flags or blocks them.', uninstall: 'Removing security hooks from settings.' },
-    secrets: { setup: 'Inspects tool input for API keys, tokens, and private key material.', uninstall: 'Removing secrets hooks from settings.' },
-    sound: { setup: 'Plays short audio cues when Claude triggers hook events.', uninstall: 'Removing sound hooks from settings.' }
+  const packageDescs = {
+    security: 'Warn/block risky commands',
+    secrets: 'Detect secret-like tokens',
+    sound: 'Play sounds on events'
   };
 
-  if (selected.includes('security')) {
-    note(packageNotes.security[action], 'security');
-    perPackage.security = await planSecuritySetup({ action, projectDir });
-  }
-  if (selected.includes('secrets')) {
-    note(packageNotes.secrets[action], 'secrets');
-    perPackage.secrets = await planSecretsSetup({ action, projectDir });
-  }
-  if (selected.includes('sound')) {
-    note(packageNotes.sound[action], 'sound');
-    perPackage.sound = await planSoundSetup({ action, projectDir });
-  }
+  note(
+    selected.map((k) => `${pc.bold(k)}: ${pc.dim(packageDescs[k] || '')}`).join('\n'),
+    action === 'setup' ? 'Selected packages' : 'Packages to remove'
+  );
+
+  if (selected.includes('security')) perPackage.security = await planSecuritySetup({ action, projectDir });
+  if (selected.includes('secrets')) perPackage.secrets = await planSecretsSetup({ action, projectDir });
+  if (selected.includes('sound')) perPackage.sound = await planSoundSetup({ action, projectDir });
 
   // Review summary
   const files = [];
