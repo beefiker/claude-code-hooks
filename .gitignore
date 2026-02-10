@@ -26,4 +26,4 @@ _nested-git-backups/
 
 # Optional: local config examples that may include personal prefs
 # (keep tracked if you want; uncomment to ignore)
-# claude-hooks.config.json
+# claude-code-hooks.config.json

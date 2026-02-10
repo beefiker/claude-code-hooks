@@ -19,7 +19,7 @@ export async function interactiveSetup() {
   const cfgExists = cfgRes.ok && cfgRes.exists;
 
   if (cfgExists) {
-    note(`Found existing ${pc.bold('claude-hooks.config.json')} — using it to pre-fill defaults.`, 'Config detected');
+    note(`Found existing ${pc.bold('claude-code-hooks.config.json')} — using it to pre-fill defaults.`, 'Config detected');
   }
 
   const scope = await select({

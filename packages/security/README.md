@@ -6,7 +6,7 @@ A Claude Code hook package that helps users feel safer by **warning** (or option
 
 This is intentionally **heuristic** and **lightweight**: it scans hook payload JSON (from stdin) for suspicious patterns like `rm -rf`, `curl | bash`, writes to `~/.ssh`, etc.
 
-> Part of the [claude-hooks](../../README.md) monorepo.
+> Part of the [claude-code-hooks](../../README.md) monorepo.
 >
 > [Contributing](../../CONTRIBUTING.md) · [Security Policy](../../SECURITY.md) · [Releasing](../../RELEASING.md) · [License](../../LICENSE)
 
@@ -18,9 +18,9 @@ Interactive setup:
 npx @claude-code-hooks/security@latest
 ```
 
-## Project config: claude-hooks.config.json
+## Project config: claude-code-hooks.config.json
 
-If `claude-hooks.config.json` exists in your project root, `claude-security` will use it as the source of truth for defaults.
+If `claude-code-hooks.config.json` exists in your project root, `claude-security` will use it as the source of truth for defaults.
 Setup will also write/update it when you **Apply**.
 
 Minimal schema:

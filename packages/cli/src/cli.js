@@ -64,13 +64,13 @@ async function ensureProjectOnlyConfig(projectDir, selected, perPackageConfig) {
 
 async function maybeWriteSnippet(projectDir, snippetObj) {
   const ok = await confirm({
-    message: `Write snippet file to ${pc.bold(path.join(projectDir, 'claude-hooks.snippet.json'))}?`,
+    message: `Write snippet file to ${pc.bold(path.join(projectDir, 'claude-code-hooks.snippet.json'))}?`,
     initialValue: false
   });
   if (isCancel(ok)) return;
   if (!ok) return;
 
-  const filePath = path.join(projectDir, 'claude-hooks.snippet.json');
+  const filePath = path.join(projectDir, 'claude-code-hooks.snippet.json');
   await fs.writeFile(filePath, JSON.stringify(snippetObj, null, 2) + '\n');
   note(filePath, 'Wrote snippet');
 }
@@ -129,7 +129,7 @@ async function main() {
   if (target === 'global') files.push(configPathForScope('global', projectDir));
   if (target === 'projectOnly') {
     files.push(path.join(projectDir, CONFIG_FILENAME));
-    files.push(path.join(projectDir, 'claude-hooks.snippet.json (optional)'));
+    files.push(path.join(projectDir, 'claude-code-hooks.snippet.json (optional)'));
   }
 
   note(
@@ -151,7 +151,7 @@ async function main() {
     const s = spinner();
     s.start('Writing project config...');
 
-    // perPackage.*.projectConfigSection is shaped for claude-hooks.config.json sections.
+    // perPackage.*.projectConfigSection is shaped for claude-code-hooks.config.json sections.
     const projectCfg = await ensureProjectOnlyConfig(projectDir, selected, {
       security: perPackage.security?.projectConfigSection,
       secrets: perPackage.secrets?.projectConfigSection,

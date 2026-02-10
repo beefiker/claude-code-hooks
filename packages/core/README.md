@@ -1,6 +1,6 @@
 # @claude-code-hooks/core
 
-Zero-dependency shared utilities for **claude-hooks** packages.
+Zero-dependency shared utilities for **claude-code-hooks** packages.
 
 ## English
 

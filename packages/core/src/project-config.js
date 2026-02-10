@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-export const CONFIG_FILENAME = 'claude-hooks.config.json';
+export const CONFIG_FILENAME = 'claude-code-hooks.config.json';
 
 export function configFilePath(cwd) {
   return path.join(cwd || process.cwd(), CONFIG_FILENAME);

@@ -1,5 +1,5 @@
 {
-  "name": "claude-hooks",
+  "name": "claude-code-hooks",
   "private": true,
   "version": "0.0.0",
   "description": "Monorepo of scoped hook packages for Claude Code (safety, comfort, UX).",

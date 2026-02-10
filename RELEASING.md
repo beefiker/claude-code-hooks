@@ -1,6 +1,6 @@
 # Releasing
 
-How we version, tag, and publish packages in the claude-hooks monorepo.
+How we version, tag, and publish packages in the claude-code-hooks monorepo.
 
 ## Versioning
 
@@ -93,7 +93,7 @@ claude-sound@0.2.5
 
 # 릴리즈 가이드 (한국어)
 
-claude-hooks 모노레포에서 버전 관리, 태그, 패키지 배포 방법을 설명합니다.
+claude-code-hooks 모노레포에서 버전 관리, 태그, 패키지 배포 방법을 설명합니다.
 
 ## 버전 관리
 

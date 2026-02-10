@@ -19,7 +19,7 @@ export function buildSettingsSnippet({ projectDir, selected, packagePlans }) {
   }
 
   // Include a comment-like pointer to project config path (JSON doesn't support comments, so we use a metadata key).
-  const cfgPath = path.join(projectDir, 'claude-hooks.config.json');
+  const cfgPath = path.join(projectDir, 'claude-code-hooks.config.json');
 
   return {
     "__generated_by": "@claude-code-hooks/cli",

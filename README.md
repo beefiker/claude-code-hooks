@@ -1,4 +1,4 @@
-# claude-hooks
+# claude-code-hooks
 
 A monorepo for Claude Code hook tooling: small, composable packages that make Claude Code feel **safe** and **comfy**.
 
@@ -28,7 +28,7 @@ npx @claude-code-hooks/sound@latest
 From this repo (workspace dev):
 
 ```bash
-cd claude-hooks
+cd claude-code-hooks
 npm install
 
 # run the interactive setup UI

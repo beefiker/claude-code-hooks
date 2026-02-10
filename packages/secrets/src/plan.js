@@ -30,7 +30,7 @@ export async function planInteractiveSetup({ action, projectDir }) {
   const cfgExists = cfgRes.ok && cfgRes.exists;
 
   if (cfgExists) {
-    note(`Found existing ${pc.bold('claude-hooks.config.json')} — using it to pre-fill defaults.`, 'Secrets');
+    note(`Found existing ${pc.bold('claude-code-hooks.config.json')} — using it to pre-fill defaults.`, 'Secrets');
   }
 
   if (action === 'uninstall') {

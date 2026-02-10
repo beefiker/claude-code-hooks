@@ -1,4 +1,4 @@
-# Contributing to claude-hooks
+# Contributing to claude-code-hooks
 
 Thank you for your interest in contributing! This guide covers everything you need to get started.
 
@@ -7,8 +7,8 @@ Thank you for your interest in contributing! This guide covers everything you ne
 1. **Fork & clone** the repo:
 
 ```bash
-git clone https://github.com/<your-fork>/claude-hooks.git
-cd claude-hooks
+git clone https://github.com/<your-fork>/claude-code-hooks.git
+cd claude-code-hooks
 npm install
 ```
 
@@ -77,8 +77,8 @@ claude-hooks에 기여해 주셔서 감사합니다! 아래는 시작하는 데 
 1. 저장소를 **포크 & 클론**합니다:
 
 ```bash
-git clone https://github.com/<your-fork>/claude-hooks.git
-cd claude-hooks
+git clone https://github.com/<your-fork>/claude-code-hooks.git
+cd claude-code-hooks
 npm install
 ```
 

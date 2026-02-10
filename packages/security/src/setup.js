@@ -20,7 +20,7 @@ export async function interactiveSetup() {
   const cfgExists = cfgRes.ok && cfgRes.exists;
 
   if (cfgExists) {
-    note(`Found existing ${pc.bold('claude-hooks.config.json')} — using it to pre-fill defaults.`, 'Config detected');
+    note(`Found existing ${pc.bold('claude-code-hooks.config.json')} — using it to pre-fill defaults.`, 'Config detected');
   }
 
   // ── Scope ──────────────────────────────────────────────────────────
@@ -99,7 +99,7 @@ export async function interactiveSetup() {
   }
   await writeJson(settingsPath, settings);
 
-  // ── Write / update claude-hooks.config.json ────────────────────────
+  // ── Write / update claude-code-hooks.config.json ────────────────────────
   if (action === 'apply') {
     const rawCfg = cfgRes.ok ? { ...cfgRes.value } : {};
     const nextCfg = upsertConfigSection(rawCfg, 'security', { mode, enabledEvents });

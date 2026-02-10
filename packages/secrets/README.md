@@ -6,7 +6,7 @@ A Claude Code hook package that helps users feel safer by warning when **secret-
 
 This is intentionally **high-signal and lightweight**: it detects only a few patterns that are commonly accidental leaks.
 
-> Part of the [claude-hooks](../../README.md) monorepo.
+> Part of the [claude-code-hooks](../../README.md) monorepo.
 >
 > [Contributing](../../CONTRIBUTING.md) · [Security Policy](../../SECURITY.md) · [Releasing](../../RELEASING.md) · [License](../../LICENSE)
 
@@ -16,7 +16,7 @@ This is intentionally **high-signal and lightweight**: it detects only a few pat
 npx @claude-code-hooks/secrets@latest
 ```
 
-## Project config: claude-hooks.config.json
+## Project config: claude-code-hooks.config.json
 
 Uses the same project config file as other packages.
 

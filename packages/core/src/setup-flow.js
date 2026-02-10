@@ -27,7 +27,7 @@ export function applyManagedHandlersForEvents(settings, { managedToken, enabledE
 }
 
 /**
- * Upsert a section (security/secrets/etc) in a claude-hooks.config.json object.
+ * Upsert a section (security/secrets/etc) in a claude-code-hooks.config.json object.
  * Preserves existing allow/ignore if present.
  *
  * @param {Record<string, any>} rawCfg

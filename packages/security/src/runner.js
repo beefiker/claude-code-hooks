@@ -94,12 +94,12 @@ export function printWarning({ eventName, risks, mode, suppressed }) {
   process.stderr.write(header + '\n');
 
   if (suppressed === 'allow') {
-    process.stderr.write(pc.dim('Risks suppressed by allow pattern in claude-hooks.config.json') + '\n');
+    process.stderr.write(pc.dim('Risks suppressed by allow pattern in claude-code-hooks.config.json') + '\n');
     return;
   }
 
   if (suppressed === 'ignore') {
-    process.stderr.write(pc.dim('Risks suppressed by ignore pattern in claude-hooks.config.json') + '\n');
+    process.stderr.write(pc.dim('Risks suppressed by ignore pattern in claude-code-hooks.config.json') + '\n');
     return;
   }
 

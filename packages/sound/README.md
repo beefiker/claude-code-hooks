@@ -1,6 +1,6 @@
 # claude-sound
 
-> Part of the [claude-hooks](../../README.md) monorepo.
+> Part of the [claude-code-hooks](../../README.md) monorepo.
 
 Cross-platform CLI (macOS, Windows, Linux) that configures **Claude Code Hooks** to play **bundled sounds**.
 

@@ -28,7 +28,7 @@ function hookGroupForEvent({ eventName, mode }) {
  * Plan-only interactive setup for claude-security.
  * Returns an object with:
  * - applyToSettings(settings) -> nextSettings
- * - projectConfigSection (for claude-hooks.config.json)
+ * - projectConfigSection (for claude-code-hooks.config.json)
  * - snippetHooks (for project-only snippet)
  */
 export async function planInteractiveSetup({ action, projectDir }) {
@@ -38,7 +38,7 @@ export async function planInteractiveSetup({ action, projectDir }) {
   const cfgExists = cfgRes.ok && cfgRes.exists;
 
   if (cfgExists) {
-    note(`Found existing ${pc.bold('claude-hooks.config.json')} — using it to pre-fill defaults.`, 'Security');
+    note(`Found existing ${pc.bold('claude-code-hooks.config.json')} — using it to pre-fill defaults.`, 'Security');
   }
 
   if (action === 'uninstall') {
