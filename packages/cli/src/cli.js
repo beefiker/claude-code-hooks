@@ -5,16 +5,6 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import {
-  ansi as pc,
-  configPathForScope,
-  readJsonIfExists,
-  writeJson,
-  CONFIG_FILENAME,
-  configFilePath,
-  readProjectConfig,
-  writeProjectConfig,
-  t,
-  parseLocaleFromArgv,
   intro,
   outro,
   select,
@@ -24,6 +14,17 @@ import {
   cancel,
   note,
   spinner
+} from '@clack/prompts';
+
+import {
+  ansi as pc,
+  configPathForScope,
+  readJsonIfExists,
+  writeJson,
+  CONFIG_FILENAME,
+  configFilePath,
+  readProjectConfig,
+  writeProjectConfig
 } from '@claude-code-hooks/core';
 
 import { buildSettingsSnippet } from './snippet.js';
@@ -35,17 +36,18 @@ import { planInteractiveSetup as planSecretsSetup } from '@claude-code-hooks/sec
 import { planInteractiveSetup as planSoundSetup } from '@claude-code-hooks/sound/src/plan.js';
 import { planInteractiveSetup as planNotificationSetup } from '@claude-code-hooks/notification/src/plan.js';
 
-function dieCancelled(msg, locale = 'en') {
-  cancel(msg ?? t('cancelled', locale));
+function dieCancelled(msg = 'Cancelled') {
+  cancel(msg);
   process.exit(0);
 }
 
-function usage(exitCode = 0, locale = 'en') {
-  process.stdout.write(t('cliUsage', locale) + '\n');
+function usage(exitCode = 0) {
+  process.stdout.write(`\
+claude-code-hooks\n\nUsage:\n  npx @claude-code-hooks/cli@latest\n\nNotes:\n  - This wizard can update your Claude Code settings (global) or generate project-only config + snippet.\n`);
   process.exit(exitCode);
 }
 
-async function ensureProjectOnlyConfig(projectDir, selected, perPackageConfig, locale) {
+async function ensureProjectOnlyConfig(projectDir, selected, perPackageConfig) {
   const cfgRes = await readProjectConfig(projectDir);
   const rawCfg = cfgRes.ok ? { ...(cfgRes.value || {}) } : {};
 
@@ -57,16 +59,14 @@ async function ensureProjectOnlyConfig(projectDir, selected, perPackageConfig, l
   if (selected.includes('secrets') && perPackageConfig.secrets) out.secrets = perPackageConfig.secrets;
   if (selected.includes('sound') && perPackageConfig.sound) out.sound = perPackageConfig.sound;
   if (selected.includes('notification') && perPackageConfig.notification) out.notification = perPackageConfig.notification;
-  if (locale === 'ko') out.locale = 'ko';
 
   await writeProjectConfig(out, projectDir);
   return out;
 }
 
-async function maybeWriteSnippet(projectDir, snippetObj, locale) {
-  const snippetPath = path.join(projectDir, 'claude-code-hooks.snippet.json');
+async function maybeWriteSnippet(projectDir, snippetObj) {
   const ok = await confirm({
-    message: t('cliSnippetPrompt', locale, { path: pc.bold(snippetPath) }),
+    message: `Write snippet file to ${pc.bold(path.join(projectDir, 'claude-code-hooks.snippet.json'))}?`,
     initialValue: false
   });
   if (isCancel(ok)) return;
@@ -74,13 +74,12 @@ async function maybeWriteSnippet(projectDir, snippetObj, locale) {
 
   const filePath = path.join(projectDir, 'claude-code-hooks.snippet.json');
   await fs.writeFile(filePath, JSON.stringify(snippetObj, null, 2) + '\n');
-  note(filePath, t('cliWroteSnippet', locale));
+  note(filePath, 'Wrote snippet');
 }
 
 async function main() {
   const args = process.argv.slice(2);
-  const locale = parseLocaleFromArgv(args);
-  if (args.includes('-h') || args.includes('--help')) usage(0, locale);
+  if (args.includes('-h') || args.includes('--help')) usage(0);
 
   const projectDir = process.cwd();
 
@@ -93,40 +92,40 @@ async function main() {
 
   while (true) {
     action = await select({
-      message: `${pc.dim('Step 1/5')}  ${t('cliStep1Action', locale)}`,
+      message: `${pc.dim('Step 1/5')}  Action`,
       options: [
-        { value: 'setup', label: t('cliActionSetup', locale) },
-        { value: 'uninstall', label: t('cliActionUninstall', locale) },
-        { value: 'exit', label: t('cliActionExit', locale) }
+        { value: 'setup', label: 'Setup / enable packages' },
+        { value: 'uninstall', label: 'Uninstall / remove managed hooks' },
+        { value: 'exit', label: 'Exit' }
       ]
     });
-    if (isCancel(action) || action === 'exit') dieCancelled(t('bye', locale), locale);
+    if (isCancel(action) || action === 'exit') dieCancelled('Bye');
 
     target = await select({
-      message: `${pc.dim('Step 2/5')}  ${t('cliStep2Target', locale)}`,
+      message: `${pc.dim('Step 2/5')}  Target`,
       options: [
-        { value: 'global', label: t('cliTargetGlobal', locale) },
-        { value: 'projectOnly', label: t('cliTargetProjectOnly', locale, { config: pc.bold(CONFIG_FILENAME) }) },
-        { value: '__back__', label: t('cliTargetBack', locale) }
+        { value: 'global', label: `Global (default): ${pc.dim('~/.claude/settings.json')}` },
+        { value: 'projectOnly', label: `Project-only: write ${pc.bold(CONFIG_FILENAME)} + print snippet` },
+        { value: '__back__', label: 'Back' }
       ]
     });
-    if (isCancel(target)) dieCancelled(undefined, locale);
+    if (isCancel(target)) dieCancelled();
     if (target === '__back__') continue;
 
     selected = await multiselect({
-      message: `${pc.dim('Step 3/5')}  ${t('cliStep3Packages', locale)}`,
+      message: `${pc.dim('Step 3/5')}  Packages`,
       options: [
-        { value: 'security', label: t('cliPkgSecurity', locale), hint: t('cliPkgSecurityHint', locale) },
-        { value: 'secrets', label: t('cliPkgSecrets', locale), hint: t('cliPkgSecretsHint', locale) },
-        { value: 'sound', label: t('cliPkgSound', locale), hint: t('cliPkgSoundHint', locale) },
-        { value: 'notification', label: t('cliPkgNotification', locale), hint: t('cliPkgNotificationHint', locale) }
+        { value: 'security', label: '@claude-code-hooks/security', hint: 'Warn/block risky commands' },
+        { value: 'secrets', label: '@claude-code-hooks/secrets', hint: 'Detect secret-like tokens' },
+        { value: 'sound', label: '@claude-code-hooks/sound', hint: 'Play sounds on events' },
+        { value: 'notification', label: '@claude-code-hooks/notification', hint: 'OS notifications on events' }
       ],
       required: true
     });
-    if (isCancel(selected)) dieCancelled(undefined, locale);
+    if (isCancel(selected)) dieCancelled();
 
-    const proceed = await confirm({ message: t('cliContinue', locale), initialValue: true });
-    if (isCancel(proceed)) dieCancelled(undefined, locale);
+    const proceed = await confirm({ message: 'Continue to configure selected packages?', initialValue: true });
+    if (isCancel(proceed)) dieCancelled();
     if (!proceed) continue;
 
     break;
@@ -134,23 +133,17 @@ async function main() {
 
   // Build per-package plan/config
   const perPackage = { security: null, secrets: null, sound: null, notification: null };
-  const pkgHints = {
-    security: t('cliPkgSecurityHint', locale),
-    secrets: t('cliPkgSecretsHint', locale),
-    sound: t('cliPkgSoundHint', locale),
-    notification: t('cliPkgNotificationHint', locale)
-  };
 
   // ── Step 4/5: configure ──
   note(
-    selected.map((k) => `${pc.bold(k)}: ${pc.dim(pkgHints[k] || '')}`).join('\n'),
-    `${pc.dim('Step 4/5')}  ${t('cliStep4Configure', locale)}`
+    selected.map((k) => `${pc.bold(k)}: ${pc.dim({ security: 'Warn/block risky commands', secrets: 'Detect secret-like tokens', sound: 'Play sounds on events', notification: 'OS notifications on events' }[k] || '')}`).join('\n'),
+    `${pc.dim('Step 4/5')}  Configure`
   );
 
-  if (selected.includes('security')) perPackage.security = await planSecuritySetup({ action, projectDir, ui: 'umbrella', locale });
-  if (selected.includes('secrets')) perPackage.secrets = await planSecretsSetup({ action, projectDir, ui: 'umbrella', locale });
-  if (selected.includes('sound')) perPackage.sound = await planSoundSetup({ action, projectDir, ui: 'umbrella', locale });
-  if (selected.includes('notification')) perPackage.notification = await planNotificationSetup({ action, projectDir, ui: 'umbrella', locale });
+  if (selected.includes('security')) perPackage.security = await planSecuritySetup({ action, projectDir, ui: 'umbrella' });
+  if (selected.includes('secrets')) perPackage.secrets = await planSecretsSetup({ action, projectDir, ui: 'umbrella' });
+  if (selected.includes('sound')) perPackage.sound = await planSoundSetup({ action, projectDir, ui: 'umbrella' });
+  if (selected.includes('notification')) perPackage.notification = await planNotificationSetup({ action, projectDir, ui: 'umbrella' });
 
   // ── Step 5/5: review ──
   const files = [];
@@ -162,37 +155,37 @@ async function main() {
 
   function summarizePlan(key, plan) {
     if (!plan) return `${key}: (skipped)`;
-    if (action === 'uninstall') return `${key}: ${t('cliRemoveManagedHooks', locale)}`;
+    if (action === 'uninstall') return `${key}: remove managed hooks`;
 
     const events = plan.snippetHooks ? Object.keys(plan.snippetHooks) : [];
     const list = events.slice(0, 5);
     const tail = events.length > 5 ? ` +${events.length - 5} more` : '';
-    return `${key}: ${events.length} ${t('cliEventCount', locale)}${events.length ? ` (${list.join(', ')}${tail})` : ''}`;
+    return `${key}: ${events.length} event(s)${events.length ? ` (${list.join(', ')}${tail})` : ''}`;
   }
 
   note(
     [
-      `${pc.dim('Step 5/5')}  ${t('cliStep5Review', locale)}`,
+      `${pc.dim('Step 5/5')}  Review`,
       '',
-      `${t('cliReviewAction', locale)}: ${pc.bold(action)}`,
-      `${t('cliReviewTarget', locale)}: ${pc.bold(target === 'global' ? t('cliReviewGlobal', locale) : t('cliReviewProjectOnly', locale))}`,
+      `Action: ${pc.bold(action)}`,
+      `Target: ${pc.bold(target === 'global' ? 'global settings' : 'project-only')}`,
       '',
-      `${pc.bold(t('cliReviewPackages', locale))}`,
+      `${pc.bold('Packages')}`,
       ...selected.map((k) => `  - ${summarizePlan(k, perPackage[k])}`),
       '',
-      `${pc.bold(t('cliReviewFiles', locale))}`,
+      `${pc.bold('Files')}`,
       ...files.map((f) => `  - ${f}`)
     ].join('\n'),
-    t('cliStep5Review', locale)
+    'Review'
   );
 
-  const ok = await confirm({ message: t('cliApply', locale), initialValue: true });
-  if (isCancel(ok) || !ok) dieCancelled(t('noChangesWritten', locale), locale);
+  const ok = await confirm({ message: 'Apply?', initialValue: true });
+  if (isCancel(ok) || !ok) dieCancelled('No changes written');
 
   if (target === 'projectOnly') {
     // Write project config
     const s = spinner();
-    s.start(t('cliWritingProject', locale));
+    s.start('Writing project config...');
 
     // perPackage.*.projectConfigSection is shaped for claude-code-hooks.config.json sections.
     const projectCfg = await ensureProjectOnlyConfig(projectDir, selected, {
@@ -200,7 +193,7 @@ async function main() {
       secrets: perPackage.secrets?.projectConfigSection,
       sound: perPackage.sound?.projectConfigSection,
       notification: perPackage.notification?.projectConfigSection
-    }, locale);
+    });
 
     // Print snippet for user to paste into global settings.
     const snippetObj = buildSettingsSnippet({
@@ -214,12 +207,12 @@ async function main() {
       }
     });
 
-    s.stop(t('done', locale));
+    s.stop('Done');
 
-    note(JSON.stringify(snippetObj, null, 2), t('cliPasteSnippet', locale));
-    await maybeWriteSnippet(projectDir, snippetObj, locale);
+    note(JSON.stringify(snippetObj, null, 2), 'Paste into ~/.claude/settings.json');
+    await maybeWriteSnippet(projectDir, snippetObj);
 
-    outro(`${t('cliProjectConfigWritten', locale)}: ${pc.bold(configFilePath(projectDir))}`);
+    outro(`Project config written: ${pc.bold(configFilePath(projectDir))}`);
     return;
   }
 
@@ -227,14 +220,14 @@ async function main() {
   const settingsPath = configPathForScope('global', projectDir);
   const res = await readJsonIfExists(settingsPath);
   if (!res.ok) {
-    cancel(t('cliCouldNotRead', locale, { path: settingsPath }));
+    cancel(`Could not read/parse JSON at ${settingsPath}`);
     process.exit(1);
   }
 
   let settings = res.value;
 
   const s = spinner();
-  s.start(t('cliApplyingGlobal', locale));
+  s.start('Applying changes to global settings...');
 
   for (const key of selected) {
     const plan = perPackage[key];
@@ -251,11 +244,11 @@ async function main() {
       secrets: perPackage.secrets?.projectConfigSection,
       sound: perPackage.sound?.projectConfigSection,
       notification: perPackage.notification?.projectConfigSection
-    }, locale);
+    });
   }
 
-  s.stop(t('done', locale));
-  outro(`${t('cliSaved', locale)}: ${pc.bold(settingsPath)}`);
+  s.stop('Done');
+  outro(`Saved: ${pc.bold(settingsPath)}`);
 }
 
 main().catch((err) => {

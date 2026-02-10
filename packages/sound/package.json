@@ -31,6 +31,8 @@
     "prepack": "npm run generate:sounds"
   },
   "dependencies": {
+    "@clack/prompts": "^1.0.0",
+    "@clack/core": "^1.0.0",
     "@claude-code-hooks/core": "0.1.2"
   },
   "keywords": [

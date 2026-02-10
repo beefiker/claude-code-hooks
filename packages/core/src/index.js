@@ -19,19 +19,3 @@ export {
 
 export { SCOPE_OPTIONS, applyManagedHandlersForEvents, upsertConfigSection } from './setup-flow.js';
 export { createPlan, addChange, mergePlans, applyPlan } from './plan.js';
-export { t, resolveLocale, parseLocaleFromArgv } from './i18n.js';
-
-// Minimal prompt layer (dependency-free replacement for @clack/prompts)
-export {
-  CANCEL,
-  isCancel,
-  intro,
-  outro,
-  note,
-  cancel,
-  spinner,
-  text,
-  confirm,
-  select,
-  multiselect
-} from './prompts.js';

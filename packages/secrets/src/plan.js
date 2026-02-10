@@ -1,19 +1,10 @@
-import {
-  ansi as pc,
-  upsertConfigSection,
-  t,
-  select,
-  multiselect,
-  confirm,
-  isCancel,
-  cancel,
-  note
-} from '@claude-code-hooks/core';
+import { select, multiselect, confirm, isCancel, cancel, note } from '@clack/prompts';
+import { ansi as pc, upsertConfigSection } from '@claude-code-hooks/core';
 import { readProjectConfig, resolveSecretsConfig } from './config.js';
 import { HOOK_EVENTS, applySecretsToSettings, removeAllManagedSecretsHooks, buildManagedCommand } from './hooks.js';
 
-function dieCancelled(msg, locale = 'en') {
-  cancel(msg ?? t('cancelled', locale));
+function dieCancelled(msg = 'Cancelled') {
+  cancel(msg);
   process.exit(0);
 }
 
@@ -33,13 +24,13 @@ function hookGroupForEvent({ eventName, mode }) {
   ];
 }
 
-export async function planInteractiveSetup({ action, projectDir, ui = 'standalone', locale = 'en' }) {
+export async function planInteractiveSetup({ action, projectDir, ui = 'standalone' }) {
   const cfgRes = await readProjectConfig(projectDir);
   const existingCfg = cfgRes.ok ? resolveSecretsConfig(cfgRes.value) : null;
   const cfgExists = cfgRes.ok && cfgRes.exists;
 
   if (cfgExists && ui !== 'umbrella') {
-    note(t('secretsFoundConfig', locale).replace('claude-code-hooks.config.json', pc.bold('claude-code-hooks.config.json')), 'Secrets');
+    note(`Found existing ${pc.bold('claude-code-hooks.config.json')} — using it to pre-fill defaults.`, 'Secrets');
   }
 
   if (action === 'uninstall') {
@@ -53,35 +44,37 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
 
   const defaultMode = existingCfg?.mode || 'warn';
   const mode = await select({
-    message: `[secrets] ${t('secretsHowBehave', locale)}`,
+    message: '[secrets] How should it behave when it detects a secret-like token?',
     initialValue: defaultMode,
     options: [
-      { value: 'warn', label: `${t('secretsWarn', locale)} ${pc.dim(`(${t('recommended', locale)})`)}` },
-      { value: 'block', label: t('secretsBlock', locale) }
+      { value: 'warn', label: `Warn only ${pc.dim('(recommended)')}` },
+      { value: 'block', label: `Block on HIGH only ${pc.dim('(private key material)')}` }
     ]
   });
-  if (isCancel(mode)) dieCancelled(undefined, locale);
+  if (isCancel(mode)) dieCancelled();
 
   const eventDescs = {
-    PreToolUse: t('securityBeforeTool', locale),
-    PermissionRequest: t('securityToolPermission', locale)
+    PreToolUse: 'Before a tool runs',
+    PermissionRequest: 'Tool asks for permission'
   };
+
+  // Note removed: HIGH-only scope is explained in the mode option text.
 
   const defaultEvents = existingCfg?.enabledEvents || HOOK_EVENTS;
   const enabledEvents = await multiselect({
-    message: `[secrets] ${t('secretsWhichEvents', locale)}`,
+    message: '[secrets] Which events should be scanned?',
     options: HOOK_EVENTS.map((e) => ({ value: e, label: `${e} ${pc.dim('—')} ${pc.dim(eventDescs[e] || '')}` })),
     initialValues: defaultEvents.filter((e) => HOOK_EVENTS.includes(e)),
     required: false
   });
-  if (isCancel(enabledEvents)) dieCancelled(undefined, locale);
+  if (isCancel(enabledEvents)) dieCancelled();
 
   const defaultScanGitCommit = existingCfg?.scanGitCommit ?? false;
   const scanGitCommit = await confirm({
-    message: `[secrets] ${t('secretsScanGitCommit', locale)}`,
+    message: '[secrets] Scan staged files for secrets on git commit?',
     initialValue: defaultScanGitCommit
   });
-  if (isCancel(scanGitCommit)) dieCancelled(undefined, locale);
+  if (isCancel(scanGitCommit)) dieCancelled();
 
   const rawCfg = cfgRes.ok ? { ...cfgRes.value } : {};
   const nextCfg = upsertConfigSection(rawCfg, 'secrets', { mode, enabledEvents, scanGitCommit });

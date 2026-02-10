@@ -1,4 +1,5 @@
-import { ansi as pc, intro, multiselect, isCancel, cancel, note } from '@claude-code-hooks/core';
+import { intro, multiselect, isCancel, cancel, note } from '@clack/prompts';
+import { ansi as pc } from '@claude-code-hooks/core';
 
 import { HOOK_EVENTS, applyEventsToSettings, buildManagedCommand, getExistingManagedEvents } from './hooks.js';
 

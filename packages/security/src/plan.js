@@ -1,9 +1,10 @@
-import { ansi as pc, upsertConfigSection, t, select, multiselect, isCancel, cancel, note } from '@claude-code-hooks/core';
+import { select, multiselect, isCancel, cancel, note } from '@clack/prompts';
+import { ansi as pc, upsertConfigSection } from '@claude-code-hooks/core';
 import { readProjectConfig, resolveSecurityConfig } from './config.js';
 import { HOOK_EVENTS, applySecurityToSettings, removeAllManagedSecurityHooks, buildManagedCommand } from './hooks.js';
 
-function dieCancelled(msg, locale = 'en') {
-  cancel(msg ?? t('cancelled', locale));
+function dieCancelled(msg = 'Cancelled') {
+  cancel(msg);
   process.exit(0);
 }
 
@@ -30,14 +31,14 @@ function hookGroupForEvent({ eventName, mode }) {
  * - projectConfigSection (for claude-code-hooks.config.json)
  * - snippetHooks (for project-only snippet)
  */
-export async function planInteractiveSetup({ action, projectDir, ui = 'standalone', locale = 'en' }) {
+export async function planInteractiveSetup({ action, projectDir, ui = 'standalone' }) {
   // Read existing project config for defaults and to preserve allow/ignore.
   const cfgRes = await readProjectConfig(projectDir);
   const existingCfg = cfgRes.ok ? resolveSecurityConfig(cfgRes.value) : null;
   const cfgExists = cfgRes.ok && cfgRes.exists;
 
   if (cfgExists && ui !== 'umbrella') {
-    note(t('securityFoundConfig', locale).replace('claude-code-hooks.config.json', pc.bold('claude-code-hooks.config.json')), 'Security');
+    note(`Found existing ${pc.bold('claude-code-hooks.config.json')} — using it to pre-fill defaults.`, 'Security');
   }
 
   if (action === 'uninstall') {
@@ -51,28 +52,30 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
 
   const defaultMode = existingCfg?.mode || 'warn';
   const mode = await select({
-    message: `[security] ${t('securityHowBehave', locale)}`,
+    message: '[security] How should it behave when it detects a risk?',
     initialValue: defaultMode,
     options: [
-      { value: 'warn', label: `${t('securityWarn', locale)} ${pc.dim(`(${t('recommended', locale)})`)}` },
-      { value: 'block', label: `${t('securityBlock', locale)}` }
+      { value: 'warn', label: `Warn only ${pc.dim('(recommended)')}` },
+      { value: 'block', label: `Block on PreToolUse only ${pc.dim('(exit 2)')}` }
     ]
   });
-  if (isCancel(mode)) dieCancelled(undefined, locale);
+  if (isCancel(mode)) dieCancelled();
 
   const eventDescs = {
-    PreToolUse: t('securityBeforeTool', locale),
-    PermissionRequest: t('securityToolPermission', locale)
+    PreToolUse: 'Before a tool runs',
+    PermissionRequest: 'Tool asks for permission'
   };
+
+  // Note removed: block scope is explained in the mode option text.
 
   const defaultEvents = existingCfg?.enabledEvents || HOOK_EVENTS;
   const enabledEvents = await multiselect({
-    message: `[security] ${t('securityWhichEvents', locale)}`,
+    message: '[security] Which events should be guarded?',
     options: HOOK_EVENTS.map((e) => ({ value: e, label: `${e} ${pc.dim('—')} ${pc.dim(eventDescs[e] || '')}` })),
     initialValues: defaultEvents.filter((e) => HOOK_EVENTS.includes(e)),
     required: false
   });
-  if (isCancel(enabledEvents)) dieCancelled(undefined, locale);
+  if (isCancel(enabledEvents)) dieCancelled();
 
   // Build project config section, preserving allow/ignore lists.
   const rawCfg = cfgRes.ok ? { ...cfgRes.value } : {};

@@ -1,16 +1,7 @@
 #!/usr/bin/env node
 
-import {
-  ansi as pc,
-  intro,
-  outro,
-  select,
-  text,
-  isCancel,
-  cancel,
-  note,
-  spinner
-} from '@claude-code-hooks/core';
+import { intro, outro, select, text, isCancel, cancel, note, spinner } from '@clack/prompts';
+import { ansi as pc } from '@claude-code-hooks/core';
 import process from 'node:process';
 import fs from 'node:fs/promises';
 import { playSound } from './play.js';
