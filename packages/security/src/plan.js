@@ -66,6 +66,8 @@ export async function planInteractiveSetup({ action, projectDir }) {
     PermissionRequest: 'Tool asks for permission'
   };
 
+  note(`Block mode is only enforced for ${pc.bold('PreToolUse')}; other events always warn.`, 'Security');
+
   const defaultEvents = existingCfg?.enabledEvents || HOOK_EVENTS;
   const enabledEvents = await multiselect({
     message: '[security] Which events should be guarded?',

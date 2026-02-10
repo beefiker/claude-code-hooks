@@ -58,6 +58,8 @@ export async function planInteractiveSetup({ action, projectDir }) {
     PermissionRequest: 'Tool asks for permission'
   };
 
+  note(`Block mode only triggers on ${pc.bold('HIGH')} severity findings (e.g. private key material).`, 'Secrets');
+
   const defaultEvents = existingCfg?.enabledEvents || HOOK_EVENTS;
   const enabledEvents = await multiselect({
     message: '[secrets] Which events should be scanned?',

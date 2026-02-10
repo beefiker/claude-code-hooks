@@ -91,15 +91,31 @@ export async function planInteractiveSetup({ action, projectDir }) {
     SessionEnd: 'Session ends'
   };
 
-  const eventOptions = HOOK_EVENTS.map((e) => {
-    const desc = eventDescs[e] || '';
-    const inheritedId = inherited[e];
-    if (inheritedId) {
-      const disp = displaySoundId(inheritedId, labels);
-      return { value: e, label: `${e} ${pc.dim('—')} ${pc.dim(desc)}  ${pc.dim('→')} ${pc.gray(disp)} ${pc.dim('(inherited)')}` };
+  const EVENT_SECTIONS = [
+    { header: '── Session ──', events: ['SessionStart', 'UserPromptSubmit', 'Stop', 'SessionEnd'] },
+    { header: '── Tooling ──', events: ['PreToolUse', 'PermissionRequest', 'PostToolUse', 'PostToolUseFailure'] },
+    { header: '── Notifications ──', events: ['Notification'] },
+    { header: '── Agents ──', events: ['SubagentStart', 'SubagentStop', 'TeammateIdle'] },
+    { header: '── Other ──', events: ['TaskCompleted', 'PreCompact'] }
+  ];
+
+  /** Build grouped options with disabled section headers. */
+  const eventOptions = [];
+  for (const section of EVENT_SECTIONS) {
+    eventOptions.push({ value: `__hdr_${section.header}`, label: section.header, disabled: true });
+    for (const e of section.events) {
+      const desc = eventDescs[e] || '';
+      const inheritedId = inherited[e];
+      if (inheritedId) {
+        const disp = displaySoundId(inheritedId, labels);
+        eventOptions.push({ value: e, label: `${e} ${pc.dim('—')} ${pc.dim(desc)}  ${pc.dim('→')} ${pc.gray(disp)} ${pc.dim('(inherited)')}` });
+      } else {
+        eventOptions.push({ value: e, label: `${e} ${pc.dim('—')} ${pc.dim(desc)}` });
+      }
     }
-    return { value: e, label: `${e} ${pc.dim('—')} ${pc.dim(desc)}` };
-  });
+  }
+
+  note(`${pc.dim('→')} = inherited from global config (already active, no need to re-select)`, 'Legend');
 
   const enabledEvents = await multiselect({
     message: '[sound] Which events should play sounds?',
