@@ -49,7 +49,8 @@ async function cmdRun() {
     patterns: {
       allowRegex: effective.allow.regex,
       ignoreRegex: effective.ignore.regex
-    }
+    },
+    scanGitCommit: effective.scanGitCommit
   });
 
   if (findings.length > 0 || suppressed) {

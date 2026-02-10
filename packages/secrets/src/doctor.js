@@ -24,6 +24,7 @@ export async function doctor() {
     const sec = effective;
     process.stdout.write(`- mode: ${sec.mode}\n`);
     process.stdout.write(`- enabledEvents: ${sec.enabledEvents.join(', ') || '(none)'}\n`);
+    process.stdout.write(`- scanGitCommit: ${sec.scanGitCommit ? pc.green('enabled') : pc.dim('disabled')}\n`);
     process.stdout.write(`- allow.regex: ${sec.allow.regex.length}\n`);
     process.stdout.write(`- ignore.regex: ${sec.ignore.regex.length}\n\n`);
   }

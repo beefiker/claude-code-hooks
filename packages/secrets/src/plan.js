@@ -1,4 +1,4 @@
-import { select, multiselect, isCancel, cancel, note } from '@clack/prompts';
+import { select, multiselect, confirm, isCancel, cancel, note } from '@clack/prompts';
 import { ansi as pc, upsertConfigSection } from '@claude-code-hooks/core';
 import { readProjectConfig, resolveSecretsConfig } from './config.js';
 import { HOOK_EVENTS, applySecretsToSettings, removeAllManagedSecretsHooks, buildManagedCommand } from './hooks.js';
@@ -69,8 +69,15 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
   });
   if (isCancel(enabledEvents)) dieCancelled();
 
+  const defaultScanGitCommit = existingCfg?.scanGitCommit ?? false;
+  const scanGitCommit = await confirm({
+    message: '[secrets] Scan staged files for secrets on git commit?',
+    initialValue: defaultScanGitCommit
+  });
+  if (isCancel(scanGitCommit)) dieCancelled();
+
   const rawCfg = cfgRes.ok ? { ...cfgRes.value } : {};
-  const nextCfg = upsertConfigSection(rawCfg, 'secrets', { mode, enabledEvents });
+  const nextCfg = upsertConfigSection(rawCfg, 'secrets', { mode, enabledEvents, scanGitCommit });
 
   return {
     key: 'secrets',

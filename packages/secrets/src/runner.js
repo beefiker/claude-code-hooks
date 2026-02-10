@@ -1,5 +1,6 @@
 import { ansi as pc, compileRegexList, buildCombinedText } from '@claude-code-hooks/core';
 import { detectSecrets } from './patterns.js';
+import { scanStagedFiles, isGitCommitPayload } from './git-commit-scanner.js';
 
 function tryParseJson(text) {
   try {
@@ -28,11 +29,29 @@ export async function readStdinJson() {
  * @param {string} opts.eventName
  * @param {Record<string, unknown>} opts.payload
  * @param {ConfigPatterns} [opts.patterns]
+ * @param {boolean} [opts.scanGitCommit]
  * @returns {{ eventName: string, findings: import('./patterns.js').Finding[], suppressed: 'allow'|'ignore'|null }}
  */
-export function assessSecrets({ eventName, payload, patterns }) {
+export function assessSecrets({ eventName, payload, patterns, scanGitCommit = false }) {
   const combined = buildCombinedText(payload);
-  const findings = detectSecrets(combined);
+  const payloadFindings = detectSecrets(combined);
+
+  // Git-commit staged-file scanning: only on PreToolUse when enabled and command matches git commit.
+  let gitFindings = [];
+  if (scanGitCommit && eventName === 'PreToolUse' && isGitCommitPayload(payload)) {
+    gitFindings = scanStagedFiles();
+  }
+
+  // Merge and deduplicate by id (payload findings first, then git findings).
+  const seenIds = new Set();
+  const findings = [];
+  for (const f of [...payloadFindings, ...gitFindings]) {
+    // For git-commit findings we keep per-file uniqueness (detail differs), so use id+detail.
+    const key = `${f.id}:${f.detail}`;
+    if (seenIds.has(key)) continue;
+    seenIds.add(key);
+    findings.push(f);
+  }
 
   if (findings.length === 0) return { eventName, findings, suppressed: null };
 

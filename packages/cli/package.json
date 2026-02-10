@@ -29,7 +29,7 @@
     "@clack/prompts": "^1.0.0",
     "@claude-code-hooks/core": "0.1.2",
     "@claude-code-hooks/security": "0.1.4",
-    "@claude-code-hooks/secrets": "0.1.4",
+    "@claude-code-hooks/secrets": "0.1.5",
     "@claude-code-hooks/sound": "0.2.8"
   },
   "keywords": [

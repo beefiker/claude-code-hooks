@@ -1,4 +1,4 @@
-import { intro, outro, select, multiselect, isCancel, cancel, note, spinner } from '@clack/prompts';
+import { intro, outro, select, multiselect, confirm, isCancel, cancel, note, spinner } from '@clack/prompts';
 import { ansi as pc, SCOPE_OPTIONS, upsertConfigSection } from '@claude-code-hooks/core';
 import {
   HOOK_EVENTS,
@@ -60,6 +60,17 @@ export async function interactiveSetup() {
     process.exit(0);
   }
 
+  const defaultScanGitCommit = existingCfg?.scanGitCommit ?? false;
+  const scanGitCommit = await confirm({
+    message: 'Scan staged files for secrets on git commit?',
+    initialValue: defaultScanGitCommit
+  });
+
+  if (isCancel(scanGitCommit)) {
+    cancel('Cancelled');
+    process.exit(0);
+  }
+
   const action = await select({
     message: 'Apply or remove?',
     options: [
@@ -97,7 +108,7 @@ export async function interactiveSetup() {
 
   if (action === 'apply') {
     const rawCfg = cfgRes.ok ? { ...cfgRes.value } : {};
-    const nextCfg = upsertConfigSection(rawCfg, 'secrets', { mode, enabledEvents });
+    const nextCfg = upsertConfigSection(rawCfg, 'secrets', { mode, enabledEvents, scanGitCommit });
     await writeProjectConfig(nextCfg, projectDir);
   }
 

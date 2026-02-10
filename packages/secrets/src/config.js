@@ -14,6 +14,7 @@ export { CONFIG_FILENAME, configFilePath, readProjectConfig, writeProjectConfig,
  * @property {string[]} enabledEvents
  * @property {{ regex: string[] }} ignore
  * @property {{ regex: string[] }} allow
+ * @property {boolean} scanGitCommit
  */
 
 /** @returns {SecretsConfig} */
@@ -22,7 +23,8 @@ export function defaultSecretsConfig() {
     mode: 'warn',
     enabledEvents: ['PreToolUse', 'PermissionRequest'],
     ignore: { regex: [] },
-    allow: { regex: [] }
+    allow: { regex: [] },
+    scanGitCommit: false
   };
 }
 
@@ -48,11 +50,14 @@ export function resolveSecretsConfig(raw) {
     ? sec.allow.regex.filter((r) => typeof r === 'string')
     : defaults.allow.regex;
 
+  const scanGitCommit = sec.scanGitCommit === true;
+
   return {
     mode,
     enabledEvents,
     ignore: { regex: ignoreRegex },
-    allow: { regex: allowRegex }
+    allow: { regex: allowRegex },
+    scanGitCommit
   };
 }
 
