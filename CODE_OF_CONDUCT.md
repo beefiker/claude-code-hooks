@@ -20,7 +20,7 @@ We are committed to providing a friendly, safe, and welcoming environment for al
 
 ## Enforcement
 
-Instances of unacceptable behavior may be reported via [GitHub Issues](https://github.com/beefiker/claude-hooks/issues) or by contacting the maintainer directly. All reports will be reviewed and handled appropriately.
+Instances of unacceptable behavior may be reported via [GitHub Issues](https://github.com/beefiker/claude-code-hooks/issues) or by contacting the maintainer directly. All reports will be reviewed and handled appropriately.
 
 ## Attribution
 
@@ -50,7 +50,7 @@ Adapted from the [Contributor Covenant](https://www.contributor-covenant.org/), 
 
 ## 시행
 
-용납할 수 없는 행동은 [GitHub 이슈](https://github.com/beefiker/claude-hooks/issues) 또는 메인테이너에게 직접 연락하여 신고할 수 있습니다. 모든 신고는 검토되고 적절히 처리됩니다.
+용납할 수 없는 행동은 [GitHub 이슈](https://github.com/beefiker/claude-code-hooks/issues) 또는 메인테이너에게 직접 연락하여 신고할 수 있습니다. 모든 신고는 검토되고 적절히 처리됩니다.
 
 ## 출처
 

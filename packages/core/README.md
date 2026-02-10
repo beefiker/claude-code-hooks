@@ -1,4 +1,4 @@
-# @claude-hooks/core
+# @claude-code-hooks/core
 
 Zero-dependency shared utilities for **claude-hooks** packages.
 

@@ -3,14 +3,14 @@
   "version": "0.1.0",
   "description": "Scoped edition of claude-sound: configure Claude Code hooks to play bundled sounds (macOS, Windows, Linux).",
   "license": "MIT",
-  "homepage": "https://github.com/beefiker/claude-hooks/tree/main/packages/sound-scoped",
+  "homepage": "https://github.com/beefiker/claude-code-hooks/tree/main/packages/sound-scoped",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/beefiker/claude-hooks.git",
+    "url": "git+https://github.com/beefiker/claude-code-hooks.git",
     "directory": "packages/sound-scoped"
   },
   "bugs": {
-    "url": "https://github.com/beefiker/claude-hooks/issues"
+    "url": "https://github.com/beefiker/claude-code-hooks/issues"
   },
   "keywords": ["claude", "claude-code", "hooks", "audio", "notifications"],
   "type": "module",

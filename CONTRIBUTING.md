@@ -24,8 +24,8 @@ npm install
 
 # Run a command in a specific package
 npm -w claude-sound <command>
-npm -w @claude-hooks/security <command>
-npm -w @claude-hooks/secrets <command>
+npm -w @claude-code-hooks/security <command>
+npm -w @claude-code-hooks/secrets <command>
 
 # Run tests across all packages
 npm test
@@ -53,7 +53,7 @@ npm run lint
 
 ## Reporting Bugs
 
-Open a [GitHub issue](https://github.com/beefiker/claude-hooks/issues) with:
+Open a [GitHub issue](https://github.com/beefiker/claude-code-hooks/issues) with:
 - Steps to reproduce
 - Expected vs actual behavior
 - OS + Node.js version
@@ -94,8 +94,8 @@ npm install
 
 # 특정 패키지에서 명령 실행
 npm -w claude-sound <command>
-npm -w @claude-hooks/security <command>
-npm -w @claude-hooks/secrets <command>
+npm -w @claude-code-hooks/security <command>
+npm -w @claude-code-hooks/secrets <command>
 
 # 전체 패키지 테스트
 npm test
@@ -117,7 +117,7 @@ npm test
 
 ## 버그 보고
 
-[GitHub 이슈](https://github.com/beefiker/claude-hooks/issues)를 열고 다음을 포함하세요:
+[GitHub 이슈](https://github.com/beefiker/claude-code-hooks/issues)를 열고 다음을 포함하세요:
 - 재현 단계
 - 예상 동작 vs 실제 동작
 - OS + Node.js 버전

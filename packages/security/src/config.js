@@ -4,7 +4,7 @@ import {
   readProjectConfig,
   writeProjectConfig,
   compileRegexList
-} from '@claude-hooks/core';
+} from '@claude-code-hooks/core';
 
 /**
  * @typedef {Object} SecurityConfig

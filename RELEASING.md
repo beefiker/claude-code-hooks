@@ -16,12 +16,12 @@ While packages are pre-1.0, minor bumps may include breaking changes. After 1.0,
 
 | Directory | npm name | Published? |
 |-----------|----------|-----------|
-| `packages/core` | `@claude-hooks/core` | No (internal) |
-| `packages/security` | `@claude-hooks/security` | Yes |
-| `packages/secrets` | `@claude-hooks/secrets` | Yes |
+| `packages/core` | `@claude-code-hooks/core` | No (internal) |
+| `packages/security` | `@claude-code-hooks/security` | Yes |
+| `packages/secrets` | `@claude-code-hooks/secrets` | Yes |
 | `packages/sound` | `claude-sound` | Yes |
 
-`@claude-hooks/core` is a workspace dependency only — not published to npm.
+`@claude-code-hooks/core` is a workspace dependency only — not published to npm.
 
 ## Publishing a Package
 
@@ -66,8 +66,8 @@ Tags follow the pattern `<package-name>@<version>`:
 
 ```
 claude-sound@0.2.5
-@claude-hooks/security@0.1.0
-@claude-hooks/secrets@0.1.0
+@claude-code-hooks/security@0.1.0
+@claude-code-hooks/secrets@0.1.0
 ```
 
 ## Pre-publish Checklist
@@ -81,7 +81,7 @@ claude-sound@0.2.5
 
 ## Internal Dependencies
 
-`@claude-hooks/core` is referenced by exact version in consumer packages. When bumping core, also bump the dependency version in `packages/security` and `packages/secrets`.
+`@claude-code-hooks/core` is referenced by exact version in consumer packages. When bumping core, also bump the dependency version in `packages/security` and `packages/secrets`.
 
 ## Notes
 
@@ -148,8 +148,8 @@ git push && git push --tags
 
 ```
 claude-sound@0.2.5
-@claude-hooks/security@0.1.0
-@claude-hooks/secrets@0.1.0
+@claude-code-hooks/security@0.1.0
+@claude-code-hooks/secrets@0.1.0
 ```
 
 ## 배포 전 체크리스트
@@ -163,7 +163,7 @@ claude-sound@0.2.5
 
 ## 내부 의존성
 
-`@claude-hooks/core`는 소비자 패키지에서 정확한 버전으로 참조됩니다. core를 범프할 때 `packages/security`와 `packages/secrets`의 의존성 버전도 함께 올려야 합니다.
+`@claude-code-hooks/core`는 소비자 패키지에서 정확한 버전으로 참조됩니다. core를 범프할 때 `packages/security`와 `packages/secrets`의 의존성 버전도 함께 올려야 합니다.
 
 ## 참고
 

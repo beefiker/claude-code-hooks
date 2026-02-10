@@ -6,7 +6,7 @@ import process from 'node:process';
 process.stdout.on('error', (err) => {
   if (err && err.code === 'EPIPE') process.exit(0);
 });
-import { ansi as pc } from '@claude-hooks/core';
+import { ansi as pc } from '@claude-code-hooks/core';
 import { HOOK_EVENTS } from './hooks.js';
 import { interactiveSetup } from './setup.js';
 import { loadEffectiveConfig } from './config.js';
@@ -15,7 +15,7 @@ import { readStdinJson, assessSecrets, printFindings } from './runner.js';
 
 function usage(exitCode = 0) {
   process.stdout.write(`\
-claude-secrets\n\nUsage:\n  npx @claude-hooks/secrets@latest          Interactive setup\n  claude-secrets                           Interactive setup\n\n  claude-secrets run --event <Event>        Run as a hook handler (reads JSON from stdin)\n  claude-secrets list-events                List supported Claude hook events\n  claude-secrets doctor                     Inspect config + installed managed hooks\n\nOptions:\n  --mode <warn|block>                        Runner mode (default: from config, else warn)\n  -h, --help                                 Show help\n\nNotes:\n  - warn: prints warnings and exits 0\n  - block: exits 2 only for HIGH confidence findings (private key material)\n\nExamples:\n  npx @claude-hooks/secrets@latest\n  echo '{"text":"-----BEGIN OPENSSH PRIVATE KEY-----"}' | npx --yes @claude-hooks/secrets@latest run --event PreToolUse --mode block\n  claude-secrets doctor\n`);
+claude-secrets\n\nUsage:\n  npx @claude-code-hooks/secrets@latest          Interactive setup\n  claude-secrets                           Interactive setup\n\n  claude-secrets run --event <Event>        Run as a hook handler (reads JSON from stdin)\n  claude-secrets list-events                List supported Claude hook events\n  claude-secrets doctor                     Inspect config + installed managed hooks\n\nOptions:\n  --mode <warn|block>                        Runner mode (default: from config, else warn)\n  -h, --help                                 Show help\n\nNotes:\n  - warn: prints warnings and exits 0\n  - block: exits 2 only for HIGH confidence findings (private key material)\n\nExamples:\n  npx @claude-code-hooks/secrets@latest\n  echo '{"text":"-----BEGIN OPENSSH PRIVATE KEY-----"}' | npx --yes @claude-code-hooks/secrets@latest run --event PreToolUse --mode block\n  claude-secrets doctor\n`);
   process.exit(exitCode);
 }
 

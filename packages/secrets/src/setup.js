@@ -1,5 +1,5 @@
 import { intro, outro, select, multiselect, isCancel, cancel, note, spinner } from '@clack/prompts';
-import { ansi as pc, SCOPE_OPTIONS, upsertConfigSection } from '@claude-hooks/core';
+import { ansi as pc, SCOPE_OPTIONS, upsertConfigSection } from '@claude-code-hooks/core';
 import {
   HOOK_EVENTS,
   configPathForScope,

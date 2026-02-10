@@ -6,7 +6,7 @@ If you discover a security vulnerability in claude-hooks, **please do not open a
 
 Instead, report it privately:
 
-- **Email:** Open a [GitHub Security Advisory](https://github.com/beefiker/claude-hooks/security/advisories/new)
+- **Email:** Open a [GitHub Security Advisory](https://github.com/beefiker/claude-code-hooks/security/advisories/new)
 - Or email the maintainer directly (see GitHub profile)
 
 We will acknowledge receipt within **48 hours** and aim to provide a fix or mitigation within **7 days** for critical issues.
@@ -16,9 +16,9 @@ We will acknowledge receipt within **48 hours** and aim to provide a fix or miti
 | Package | Version | Supported |
 |---------|---------|-----------|
 | claude-sound | 0.2.x | Yes |
-| @claude-hooks/security | 0.1.x | Yes |
-| @claude-hooks/secrets | 0.1.x | Yes |
-| @claude-hooks/core | 0.1.x | Yes |
+| @claude-code-hooks/security | 0.1.x | Yes |
+| @claude-code-hooks/secrets | 0.1.x | Yes |
+| @claude-code-hooks/core | 0.1.x | Yes |
 
 Only the latest minor version of each package receives security patches.
 
@@ -56,7 +56,7 @@ claude-hooks에서 보안 취약점을 발견하면 **공개 이슈를 열지 �
 
 대신, 비공개로 보고해 주세요:
 
-- [GitHub 보안 권고](https://github.com/beefiker/claude-hooks/security/advisories/new)를 통해 보고
+- [GitHub 보안 권고](https://github.com/beefiker/claude-code-hooks/security/advisories/new)를 통해 보고
 - 또는 메인테이너에게 직접 이메일 (GitHub 프로필 참조)
 
 **48시간** 이내에 수신 확인을 드리고, 심각한 문제의 경우 **7일** 이내에 수정 또는 완화 방안을 제공합니다.

@@ -6,11 +6,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/beefiker/claude-hooks.git"
+    "url": "git+https://github.com/beefiker/claude-code-hooks.git"
   },
-  "homepage": "https://github.com/beefiker/claude-hooks",
+  "homepage": "https://github.com/beefiker/claude-code-hooks",
   "bugs": {
-    "url": "https://github.com/beefiker/claude-hooks/issues"
+    "url": "https://github.com/beefiker/claude-code-hooks/issues"
   },
   "workspaces": [
     "packages/*"

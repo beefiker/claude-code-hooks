@@ -5,13 +5,13 @@ import {
   removeManagedHandlers,
   addManagedHandler,
   isManagedCommand as _isManagedCommand
-} from '@claude-hooks/core';
+} from '@claude-code-hooks/core';
 
 export const HOOK_EVENTS = ['PreToolUse', 'PermissionRequest'];
 
 export { configPathForScope, readJsonIfExists, writeJson };
 
-const MANAGED_TOKEN = '--managed-by @claude-hooks/secrets';
+const MANAGED_TOKEN = '--managed-by @claude-code-hooks/secrets';
 
 export function isManagedCommand(command) {
   return _isManagedCommand(command, MANAGED_TOKEN);
@@ -26,7 +26,7 @@ function validateEventName(eventName) {
 export function buildManagedCommand({ eventName, mode }) {
   validateEventName(eventName);
   const safeMode = mode === 'block' ? 'block' : 'warn';
-  return `npx --yes @claude-hooks/secrets@latest run --event ${eventName} --mode ${safeMode} ${MANAGED_TOKEN}`;
+  return `npx --yes @claude-code-hooks/secrets@latest run --event ${eventName} --mode ${safeMode} ${MANAGED_TOKEN}`;
 }
 
 export function applySecretsToSettings(settings, { enabledEvents, mode }) {

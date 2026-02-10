@@ -1,4 +1,4 @@
-import { ansi as pc, compileRegexList, buildCombinedText } from '@claude-hooks/core';
+import { ansi as pc, compileRegexList, buildCombinedText } from '@claude-code-hooks/core';
 import { detectSecrets } from './patterns.js';
 
 function tryParseJson(text) {

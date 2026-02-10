@@ -9,7 +9,7 @@ import {
   limitOptions
 } from '@clack/prompts';
 import { wrapTextWithPrefix } from '@clack/core';
-import { ansi as pc } from '@claude-hooks/core';
+import { ansi as pc } from '@claude-code-hooks/core';
 import { playSoundPreview, stopPreview } from './play.js';
 
 /**

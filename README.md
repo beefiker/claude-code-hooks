@@ -5,8 +5,8 @@ A monorepo for Claude Code hook tooling: small, composable packages that make Cl
 Right now this repo contains:
 
 - `packages/sound` → **claude-sound**: configure Claude Code hooks to play notification sounds.
-- `packages/security` → **@claude-hooks/security**: warn/block risky commands and tool invocations.
-- `packages/secrets` → **@claude-hooks/secrets**: warn/block secret-like tokens (keys, private keys) in tool inputs.
+- `packages/security` → **@claude-code-hooks/security**: warn/block risky commands and tool invocations.
+- `packages/secrets` → **@claude-code-hooks/secrets**: warn/block secret-like tokens (keys, private keys) in tool inputs.
 
 ## Install / run (sound)
 

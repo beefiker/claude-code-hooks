@@ -1,4 +1,4 @@
-# @claude-hooks/secrets
+# @claude-code-hooks/secrets
 
 A Claude Code hook package that helps users feel safer by warning when **secret-like tokens** appear in tool inputs.
 
@@ -13,7 +13,7 @@ This is intentionally **high-signal and lightweight**: it detects only a few pat
 ## Install / run
 
 ```bash
-npx @claude-hooks/secrets@latest
+npx @claude-code-hooks/secrets@latest
 ```
 
 ## Project config: claude-hooks.config.json
@@ -58,8 +58,8 @@ claude-secrets doctor
 
 ```bash
 # warn
-echo '{"text":"sk-1234567890123456789012345"}' | npx --yes @claude-hooks/secrets@latest run --event PreToolUse
+echo '{"text":"sk-1234567890123456789012345"}' | npx --yes @claude-code-hooks/secrets@latest run --event PreToolUse
 
 # block (HIGH only)
-echo '{"text":"-----BEGIN OPENSSH PRIVATE KEY-----"}' | npx --yes @claude-hooks/secrets@latest run --event PreToolUse --mode block
+echo '{"text":"-----BEGIN OPENSSH PRIVATE KEY-----"}' | npx --yes @claude-code-hooks/secrets@latest run --event PreToolUse --mode block
 ```

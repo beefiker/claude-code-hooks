@@ -1,8 +1,8 @@
-import { ansi as pc, CONFIG_FILENAME, configFilePath, readProjectConfig, configPathForScope, readJsonIfExists, extractManagedHandlers } from '@claude-hooks/core';
+import { ansi as pc, CONFIG_FILENAME, configFilePath, readProjectConfig, configPathForScope, readJsonIfExists, extractManagedHandlers } from '@claude-code-hooks/core';
 import { resolveSecretsConfig } from './config.js';
 import { HOOK_EVENTS } from './hooks.js';
 
-const MANAGED_TOKEN = '--managed-by @claude-hooks/secrets';
+const MANAGED_TOKEN = '--managed-by @claude-code-hooks/secrets';
 
 export async function doctor() {
   const cwd = process.cwd();

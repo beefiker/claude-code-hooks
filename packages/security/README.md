@@ -1,4 +1,4 @@
-# @claude-hooks/security
+# @claude-code-hooks/security
 
 A Claude Code hook package that helps users feel safer by **warning** (or optionally **blocking**) risky commands/tool invocations.
 
@@ -15,7 +15,7 @@ This is intentionally **heuristic** and **lightweight**: it scans hook payload J
 Interactive setup:
 
 ```bash
-npx @claude-hooks/security@latest
+npx @claude-code-hooks/security@latest
 ```
 
 ## Project config: claude-hooks.config.json
@@ -46,7 +46,7 @@ For each enabled event, it adds a managed hook handler like:
 ```json
 {
   "type": "command",
-  "command": "npx --yes @claude-hooks/security@latest run --event PreToolUse --mode warn --managed-by @claude-hooks/security",
+  "command": "npx --yes @claude-code-hooks/security@latest run --event PreToolUse --mode warn --managed-by @claude-code-hooks/security",
   "async": false,
   "timeout": 8
 }
@@ -55,7 +55,7 @@ For each enabled event, it adds a managed hook handler like:
 It only manages hook handlers whose command contains:
 
 ```
---managed-by @claude-hooks/security
+--managed-by @claude-code-hooks/security
 ```
 
 ## Modes
