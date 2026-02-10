@@ -91,42 +91,26 @@ export async function planInteractiveSetup({ action, projectDir }) {
     SessionEnd: 'Session ends'
   };
 
-  const EVENT_SECTIONS = [
-    { header: 'Session', events: ['SessionStart', 'UserPromptSubmit', 'Stop', 'SessionEnd'] },
-    { header: 'Tooling', events: ['PreToolUse', 'PermissionRequest', 'PostToolUse', 'PostToolUseFailure'] },
-    { header: 'Notifications', events: ['Notification'] },
-    { header: 'Agents', events: ['SubagentStart', 'SubagentStop', 'TeammateIdle'] },
-    { header: 'Other', events: ['TaskCompleted', 'PreCompact'] }
-  ];
-
-  /** Build grouped options with disabled section headers. */
-  const eventOptions = [];
-  for (const section of EVENT_SECTIONS) {
-    const hdr = String(section.header || '').toUpperCase();
-    eventOptions.push({ value: `__hdr_${hdr}`, label: pc.dim(pc.bold(hdr)), disabled: true });
-
-    for (const e of section.events) {
-      const desc = eventDescs[e] || '';
-      const inheritedId = inherited[e];
-
-      if (inheritedId) {
-        const disp = displaySoundId(inheritedId, labels);
-        eventOptions.push({
-          value: e,
-          label: e,
-          hint: `${desc} • inherited: ${disp}`
-        });
-      } else {
-        eventOptions.push({
-          value: e,
-          label: e,
-          hint: desc
-        });
-      }
+  /** Build event options (flat list; keep labels short, details in hint). */
+  const eventOptions = HOOK_EVENTS.map((e) => {
+    const desc = eventDescs[e] || '';
+    const inheritedId = inherited[e];
+    if (inheritedId) {
+      const disp = displaySoundId(inheritedId, labels);
+      return {
+        value: e,
+        label: e,
+        hint: `${desc} • inherited: ${disp}`
+      };
     }
-  }
+    return {
+      value: e,
+      label: e,
+      hint: desc
+    };
+  });
 
-  note(`Inherited = already set in ~/.claude/settings.json`, 'Legend');
+  note(`Hint shows meaning; “inherited” means already set in ~/.claude/settings.json`, 'Legend');
 
   const enabledEvents = await multiselect({
     message: '[sound] Which events should play sounds?',
