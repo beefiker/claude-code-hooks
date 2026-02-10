@@ -46,7 +46,7 @@ const CATEGORY_OPTIONS = [
   { value: 'custom', label: 'Custom' }
 ];
 
-export async function planInteractiveSetup({ action, projectDir }) {
+export async function planInteractiveSetup({ action, projectDir, ui = 'standalone' }) {
   if (action === 'uninstall') {
     return {
       key: 'sound',
@@ -56,8 +56,10 @@ export async function planInteractiveSetup({ action, projectDir }) {
     };
   }
 
-  intro('sound');
-  note('Pick events and choose a sound for each. (You can keep this minimal.)', '@claude-code-hooks/sound');
+  if (ui !== 'umbrella') {
+    intro('sound');
+    note('Pick events and choose a sound for each. (You can keep this minimal.)', '@claude-code-hooks/sound');
+  }
 
   const baseDir = projectDir || process.cwd();
 
@@ -110,7 +112,10 @@ export async function planInteractiveSetup({ action, projectDir }) {
     };
   });
 
-  note(`Hint shows meaning; “inherited” means already set in ~/.claude/settings.json`, 'Legend');
+  note(ui !== 'umbrella'
+    ? `Hint shows meaning; “inherited” means already set in ~/.claude/settings.json`
+    : `Hint shows meaning (and inherited)`,
+  'Legend');
 
   const enabledEvents = await multiselect({
     message: '[sound] Which events should play sounds?',

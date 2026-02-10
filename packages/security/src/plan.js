@@ -31,13 +31,13 @@ function hookGroupForEvent({ eventName, mode }) {
  * - projectConfigSection (for claude-code-hooks.config.json)
  * - snippetHooks (for project-only snippet)
  */
-export async function planInteractiveSetup({ action, projectDir }) {
+export async function planInteractiveSetup({ action, projectDir, ui = 'standalone' }) {
   // Read existing project config for defaults and to preserve allow/ignore.
   const cfgRes = await readProjectConfig(projectDir);
   const existingCfg = cfgRes.ok ? resolveSecurityConfig(cfgRes.value) : null;
   const cfgExists = cfgRes.ok && cfgRes.exists;
 
-  if (cfgExists) {
+  if (cfgExists && ui !== 'umbrella') {
     note(`Found existing ${pc.bold('claude-code-hooks.config.json')} — using it to pre-fill defaults.`, 'Security');
   }
 
@@ -66,7 +66,11 @@ export async function planInteractiveSetup({ action, projectDir }) {
     PermissionRequest: 'Tool asks for permission'
   };
 
-  note(`Block mode is only enforced for ${pc.bold('PreToolUse')}; other events always warn.`, 'Security');
+  if (ui !== 'umbrella') {
+    note(`Block mode is only enforced for ${pc.bold('PreToolUse')}; other events always warn.`, 'Security');
+  } else {
+    note(`Block only affects ${pc.bold('PreToolUse')}.`, 'Security');
+  }
 
   const defaultEvents = existingCfg?.enabledEvents || HOOK_EVENTS;
   const enabledEvents = await multiselect({

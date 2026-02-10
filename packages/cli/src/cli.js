@@ -83,59 +83,65 @@ async function main() {
 
   intro('claude-code-hooks');
 
-  const action = await select({
-    message: 'What do you want to do?',
-    options: [
-      { value: 'setup', label: 'Setup / enable packages' },
-      { value: 'uninstall', label: 'Uninstall / remove managed hooks' },
-      { value: 'exit', label: 'Exit' }
-    ]
-  });
-  if (isCancel(action) || action === 'exit') dieCancelled('Bye');
+  // ── Step 1–3: action, target, packages (with simple back navigation) ──
+  let action;
+  let target;
+  let selected;
 
-  const target = await select({
-    message: 'Where do you want to apply changes?',
-    options: [
-      { value: 'global', label: `Global (default): ${pc.dim('~/.claude/settings.json')}` },
-      { value: 'projectOnly', label: `Project-only: write ${pc.bold(CONFIG_FILENAME)} + print snippet` }
-    ]
-  });
-  if (isCancel(target)) dieCancelled();
+  while (true) {
+    action = await select({
+      message: `${pc.dim('Step 1/5')}  Action`,
+      options: [
+        { value: 'setup', label: 'Setup / enable packages' },
+        { value: 'uninstall', label: 'Uninstall / remove managed hooks' },
+        { value: 'exit', label: 'Exit' }
+      ]
+    });
+    if (isCancel(action) || action === 'exit') dieCancelled('Bye');
 
-  const selected = await multiselect({
-    message: action === 'setup' ? 'Which packages do you want to enable?' : 'Which packages do you want to uninstall?',
-    options: [
-      { value: 'security', label: '@claude-code-hooks/security', hint: 'Warn/block risky commands' },
-      { value: 'secrets', label: '@claude-code-hooks/secrets', hint: 'Detect secret-like tokens' },
-      { value: 'sound', label: '@claude-code-hooks/sound', hint: 'Play sounds on events' }
-    ],
-    required: true
-  });
-  if (isCancel(selected)) dieCancelled();
+    target = await select({
+      message: `${pc.dim('Step 2/5')}  Target`,
+      options: [
+        { value: 'global', label: `Global (default): ${pc.dim('~/.claude/settings.json')}` },
+        { value: 'projectOnly', label: `Project-only: write ${pc.bold(CONFIG_FILENAME)} + print snippet` },
+        { value: '__back__', label: 'Back' }
+      ]
+    });
+    if (isCancel(target)) dieCancelled();
+    if (target === '__back__') continue;
+
+    selected = await multiselect({
+      message: `${pc.dim('Step 3/5')}  Packages`,
+      options: [
+        { value: 'security', label: '@claude-code-hooks/security', hint: 'Warn/block risky commands' },
+        { value: 'secrets', label: '@claude-code-hooks/secrets', hint: 'Detect secret-like tokens' },
+        { value: 'sound', label: '@claude-code-hooks/sound', hint: 'Play sounds on events' }
+      ],
+      required: true
+    });
+    if (isCancel(selected)) dieCancelled();
+
+    const proceed = await confirm({ message: 'Continue to configure selected packages?', initialValue: true });
+    if (isCancel(proceed)) dieCancelled();
+    if (!proceed) continue;
+
+    break;
+  }
 
   // Build per-package plan/config
-  const perPackage = {
-    security: null,
-    secrets: null,
-    sound: null
-  };
+  const perPackage = { security: null, secrets: null, sound: null };
 
-  const packageDescs = {
-    security: 'Warn/block risky commands',
-    secrets: 'Detect secret-like tokens',
-    sound: 'Play sounds on events'
-  };
-
+  // ── Step 4/5: configure ──
   note(
-    selected.map((k) => `${pc.bold(k)}: ${pc.dim(packageDescs[k] || '')}`).join('\n'),
-    action === 'setup' ? 'Selected packages' : 'Packages to remove'
+    selected.map((k) => `${pc.bold(k)}: ${pc.dim({ security: 'Warn/block risky commands', secrets: 'Detect secret-like tokens', sound: 'Play sounds on events' }[k] || '')}`).join('\n'),
+    `${pc.dim('Step 4/5')}  Configure`
   );
 
-  if (selected.includes('security')) perPackage.security = await planSecuritySetup({ action, projectDir });
-  if (selected.includes('secrets')) perPackage.secrets = await planSecretsSetup({ action, projectDir });
-  if (selected.includes('sound')) perPackage.sound = await planSoundSetup({ action, projectDir });
+  if (selected.includes('security')) perPackage.security = await planSecuritySetup({ action, projectDir, ui: 'umbrella' });
+  if (selected.includes('secrets')) perPackage.secrets = await planSecretsSetup({ action, projectDir, ui: 'umbrella' });
+  if (selected.includes('sound')) perPackage.sound = await planSoundSetup({ action, projectDir, ui: 'umbrella' });
 
-  // Review summary
+  // ── Step 5/5: review ──
   const files = [];
   if (target === 'global') files.push(configPathForScope('global', projectDir));
   if (target === 'projectOnly') {
@@ -143,12 +149,27 @@ async function main() {
     files.push(path.join(projectDir, 'claude-code-hooks.snippet.json (optional)'));
   }
 
+  function summarizePlan(key, plan) {
+    if (!plan) return `${key}: (skipped)`;
+    if (action === 'uninstall') return `${key}: remove managed hooks`;
+
+    const events = plan.snippetHooks ? Object.keys(plan.snippetHooks) : [];
+    const list = events.slice(0, 5);
+    const tail = events.length > 5 ? ` +${events.length - 5} more` : '';
+    return `${key}: ${events.length} event(s)${events.length ? ` (${list.join(', ')}${tail})` : ''}`;
+  }
+
   note(
     [
+      `${pc.dim('Step 5/5')}  Review`,
+      '',
       `Action: ${pc.bold(action)}`,
       `Target: ${pc.bold(target === 'global' ? 'global settings' : 'project-only')}`,
-      `Packages: ${pc.bold(selected.join(', '))}`,
-      `Files:`,
+      '',
+      `${pc.bold('Packages')}`,
+      ...selected.map((k) => `  - ${summarizePlan(k, perPackage[k])}`),
+      '',
+      `${pc.bold('Files')}`,
       ...files.map((f) => `  - ${f}`)
     ].join('\n'),
     'Review'

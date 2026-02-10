@@ -24,12 +24,12 @@ function hookGroupForEvent({ eventName, mode }) {
   ];
 }
 
-export async function planInteractiveSetup({ action, projectDir }) {
+export async function planInteractiveSetup({ action, projectDir, ui = 'standalone' }) {
   const cfgRes = await readProjectConfig(projectDir);
   const existingCfg = cfgRes.ok ? resolveSecretsConfig(cfgRes.value) : null;
   const cfgExists = cfgRes.ok && cfgRes.exists;
 
-  if (cfgExists) {
+  if (cfgExists && ui !== 'umbrella') {
     note(`Found existing ${pc.bold('claude-code-hooks.config.json')} — using it to pre-fill defaults.`, 'Secrets');
   }
 
@@ -58,7 +58,11 @@ export async function planInteractiveSetup({ action, projectDir }) {
     PermissionRequest: 'Tool asks for permission'
   };
 
-  note(`Block mode only triggers on ${pc.bold('HIGH')} severity findings (e.g. private key material).`, 'Secrets');
+  if (ui !== 'umbrella') {
+    note(`Block mode only triggers on ${pc.bold('HIGH')} severity findings (e.g. private key material).`, 'Secrets');
+  } else {
+    note(`Block only on ${pc.bold('HIGH')} findings.`, 'Secrets');
+  }
 
   const defaultEvents = existingCfg?.enabledEvents || HOOK_EVENTS;
   const enabledEvents = await multiselect({
