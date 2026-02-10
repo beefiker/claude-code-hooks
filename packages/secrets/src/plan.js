@@ -47,8 +47,8 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
     message: '[secrets] How should it behave when it detects a secret-like token?',
     initialValue: defaultMode,
     options: [
-      { value: 'warn', label: `Warn only ${pc.dim('(recommended to start)')}` },
-      { value: 'block', label: `Block (HIGH only) ${pc.dim('(private key material)')}` }
+      { value: 'warn', label: `Warn only ${pc.dim('(recommended)')}` },
+      { value: 'block', label: `Block on HIGH only ${pc.dim('(private key material)')}` }
     ]
   });
   if (isCancel(mode)) dieCancelled();
@@ -58,11 +58,7 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
     PermissionRequest: 'Tool asks for permission'
   };
 
-  if (ui !== 'umbrella') {
-    note(`Block mode only triggers on ${pc.bold('HIGH')} severity findings (e.g. private key material).`, 'Secrets');
-  } else {
-    note(`Block only on ${pc.bold('HIGH')} findings.`, 'Secrets');
-  }
+  // Note removed: HIGH-only scope is explained in the mode option text.
 
   const defaultEvents = existingCfg?.enabledEvents || HOOK_EVENTS;
   const enabledEvents = await multiselect({
