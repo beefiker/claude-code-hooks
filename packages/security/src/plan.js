@@ -55,8 +55,8 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
     message: '[security] How should it behave when it detects a risk?',
     initialValue: defaultMode,
     options: [
-      { value: 'warn', label: `Warn only ${pc.dim('(recommended to start)')}` },
-      { value: 'block', label: `Block (exit 2) ${pc.dim('(may interrupt workflows)')}` }
+      { value: 'warn', label: `Warn only ${pc.dim('(recommended)')}` },
+      { value: 'block', label: `Block on PreToolUse only ${pc.dim('(exit 2)')}` }
     ]
   });
   if (isCancel(mode)) dieCancelled();
@@ -66,11 +66,7 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
     PermissionRequest: 'Tool asks for permission'
   };
 
-  if (ui !== 'umbrella') {
-    note(`Block mode is only enforced for ${pc.bold('PreToolUse')}; other events always warn.`, 'Security');
-  } else {
-    note(`Block only affects ${pc.bold('PreToolUse')}.`, 'Security');
-  }
+  // Note removed: block scope is explained in the mode option text.
 
   const defaultEvents = existingCfg?.enabledEvents || HOOK_EVENTS;
   const enabledEvents = await multiselect({
