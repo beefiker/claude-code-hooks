@@ -1,10 +1,10 @@
 import { select, multiselect, isCancel, cancel, note } from '@clack/prompts';
-import { ansi as pc, upsertConfigSection } from '@claude-code-hooks/core';
+import { ansi as pc, upsertConfigSection, t } from '@claude-code-hooks/core';
 import { readProjectConfig, resolveSecurityConfig } from './config.js';
 import { HOOK_EVENTS, applySecurityToSettings, removeAllManagedSecurityHooks, buildManagedCommand } from './hooks.js';
 
-function dieCancelled(msg = 'Cancelled') {
-  cancel(msg);
+function dieCancelled(msg) {
+  cancel(msg ?? t('common.cancelled'));
   process.exit(0);
 }
 
@@ -38,7 +38,7 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
   const cfgExists = cfgRes.ok && cfgRes.exists;
 
   if (cfgExists && ui !== 'umbrella') {
-    note(`Found existing ${pc.bold('claude-code-hooks.config.json')} — using it to pre-fill defaults.`, 'Security');
+    note(t('common.configFound'), t('security.title'));
   }
 
   if (action === 'uninstall') {
@@ -52,25 +52,25 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
 
   const defaultMode = existingCfg?.mode || 'warn';
   const mode = await select({
-    message: `${pc.bold('security')}  When a risky command is detected…`,
+    message: `${pc.bold('security')}  ${t('security.whenRiskyCommand')}`,
     initialValue: defaultMode,
     options: [
-      { value: 'warn', label: 'Warn (recommended)' },
-      { value: 'block', label: 'Block on PreToolUse (exit 2)' }
+      { value: 'warn', label: t('security.warnRecommended') },
+      { value: 'block', label: t('security.blockPreToolUse') }
     ]
   });
   if (isCancel(mode)) dieCancelled();
 
   const eventDescs = {
-    PreToolUse: 'Before a tool runs',
-    PermissionRequest: 'Tool asks for permission'
+    PreToolUse: t('security.eventPreToolUse'),
+    PermissionRequest: t('security.eventPermissionRequest')
   };
 
   // Note removed: block scope is explained in the mode option text.
 
   const defaultEvents = existingCfg?.enabledEvents || HOOK_EVENTS;
   const enabledEvents = await multiselect({
-    message: `${pc.bold('security')}  Events to guard`,
+    message: `${pc.bold('security')}  ${t('security.eventsToGuard')}`,
     options: HOOK_EVENTS.map((e) => ({ value: e, label: `${e} ${pc.dim('—')} ${pc.dim(eventDescs[e] || '')}` })),
     initialValues: defaultEvents.filter((e) => HOOK_EVENTS.includes(e)),
     required: false

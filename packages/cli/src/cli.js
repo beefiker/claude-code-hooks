@@ -31,7 +31,9 @@ import {
   configFilePath,
   readProjectConfig,
   writeProjectConfig,
-  removeLegacyClaudeSoundHooks
+  removeLegacyClaudeSoundHooks,
+  t,
+  detectLanguage
 } from '@claude-code-hooks/core';
 
 import { buildSettingsSnippet } from './snippet.js';
@@ -43,8 +45,8 @@ import { planInteractiveSetup as planSecretsSetup } from '@claude-code-hooks/sec
 import { planInteractiveSetup as planSoundSetup } from '@claude-code-hooks/sound/src/plan.js';
 import { planInteractiveSetup as planNotificationSetup } from '@claude-code-hooks/notification/src/plan.js';
 
-function dieCancelled(msg = 'Cancelled') {
-  cancel(msg);
+function dieCancelled(msg) {
+  cancel(msg ?? t('cli.cancelled'));
   process.exit(0);
 }
 
@@ -73,8 +75,7 @@ async function withBackspaceBack(controller, runPrompt) {
 }
 
 function usage(exitCode = 0) {
-  process.stdout.write(`\
-claude-code-hooks\n\nUsage:\n  claude-code-hooks\n  npx @claude-code-hooks/cli@latest\n\nWhat it does:\n  - Update Claude Code settings (global), or generate a project-only config + pasteable snippet.\n`);
+  process.stdout.write(t('cli.usage') + '\n');
   process.exit(exitCode);
 }
 
@@ -97,7 +98,7 @@ async function ensureProjectOnlyConfig(projectDir, selected, perPackageConfig) {
 
 async function maybeWriteSnippet(projectDir, snippetObj) {
   const ok = await confirm({
-    message: `Write snippet file (${pc.bold('claude-code-hooks.snippet.json')}) to this project?`,
+    message: t('cli.writeSnippet'),
     initialValue: false
   });
   if (isCancel(ok)) return;
@@ -105,17 +106,23 @@ async function maybeWriteSnippet(projectDir, snippetObj) {
 
   const filePath = path.join(projectDir, 'claude-code-hooks.snippet.json');
   await fs.writeFile(filePath, JSON.stringify(snippetObj, null, 2) + '\n');
-  note(filePath, 'Wrote snippet');
+  note(filePath, t('cli.wroteSnippet'));
 }
 
 async function main() {
   const args = process.argv.slice(2);
   if (args.includes('-h') || args.includes('--help')) usage(0);
 
+  // i18n: --lang ko or env CLAUDE_CODE_HOOKS_LANG
+  const langIdx = args.indexOf('--lang');
+  if (langIdx !== -1 && args[langIdx + 1]) {
+    process.env.CLAUDE_CODE_HOOKS_LANG = args[langIdx + 1].toLowerCase().slice(0, 2);
+  }
+
   const projectDir = process.cwd();
 
   intro('claude-code-hooks');
-  note(`${pc.dim('ESC')} to exit  •  ${pc.dim('Backspace')} to go back`, 'Navigation');
+  note(t('cli.navHint'), t('cli.navTitle'));
 
   // ── Step 1–3: action, target, packages (Backspace = go to previous step) ──
   let action;
@@ -126,23 +133,23 @@ async function main() {
   let perPackage = { security: null, secrets: null, sound: null, notification: null };
 
   const packageOptions = [
-    { value: 'security', label: '@claude-code-hooks/security', hint: 'Warn/block risky commands' },
-    { value: 'secrets', label: '@claude-code-hooks/secrets', hint: 'Detect secret-like tokens' },
-    { value: 'sound', label: '@claude-code-hooks/sound', hint: 'Play sounds for key events' },
-    { value: 'notification', label: '@claude-code-hooks/notification', hint: 'OS notifications for key events' }
+    { value: 'security', label: t('cli.pkgSecurity'), hint: t('cli.pkgSecurityHint') },
+    { value: 'secrets', label: t('cli.pkgSecrets'), hint: t('cli.pkgSecretsHint') },
+    { value: 'sound', label: t('cli.pkgSound'), hint: t('cli.pkgSoundHint') },
+    { value: 'notification', label: t('cli.pkgNotification'), hint: t('cli.pkgNotificationHint') }
   ];
 
   while (true) {
     if (step === 1) {
       action = await select({
-        message: `${pc.dim('Step 1/5')}  Choose an action`,
+        message: `${pc.dim(t('cli.stepFormat', { n: 1 }))}  ${t('cli.step1ChooseAction')}`,
         options: [
-          { value: 'setup', label: 'Install / update packages' },
-          { value: 'uninstall', label: 'Uninstall (remove managed hooks)' },
-          { value: 'exit', label: 'Exit' }
+          { value: 'setup', label: t('cli.actionSetup') },
+          { value: 'uninstall', label: t('cli.actionUninstall') },
+          { value: 'exit', label: t('cli.actionExit') }
         ]
       });
-      if (isCancel(action) || action === 'exit') dieCancelled('Bye');
+      if (isCancel(action) || action === 'exit') dieCancelled(t('cli.bye'));
       step = 2;
     }
 
@@ -150,10 +157,10 @@ async function main() {
       const targetCtrl = new AbortController();
       const { result: targetResult, wentBack: targetBack } = await withBackspaceBack(targetCtrl, () =>
         select({
-          message: `${pc.dim('Step 2/5')}  Choose a target`,
+          message: `${pc.dim(t('cli.stepFormat', { n: 2 }))}  ${t('cli.step2ChooseTarget')}`,
           options: [
-            { value: 'global', label: `Global (default): ${pc.dim('~/.claude/settings.json')}` },
-            { value: 'projectOnly', label: `Project-only: write ${pc.bold(CONFIG_FILENAME)} + print a snippet` }
+            { value: 'global', label: t('cli.targetGlobal') },
+            { value: 'projectOnly', label: t('cli.targetProjectOnly').replace(CONFIG_FILENAME, pc.bold(CONFIG_FILENAME)) }
           ],
           signal: targetCtrl.signal
         })
@@ -171,7 +178,7 @@ async function main() {
       const pkgsCtrl = new AbortController();
       const { result: pkgsResult, wentBack: pkgsBack } = await withBackspaceBack(pkgsCtrl, () =>
         multiselect({
-          message: `${pc.dim('Step 3/5')}  Select packages`,
+          message: `${pc.dim(t('cli.stepFormat', { n: 3 }))}  ${t('cli.step3SelectPackages')}`,
           options: packageOptions,
           required: true,
           signal: pkgsCtrl.signal
@@ -189,7 +196,7 @@ async function main() {
     if (step === 4) {
       const proceedCtrl = new AbortController();
       const { result: proceedResult, wentBack: proceedBack } = await withBackspaceBack(proceedCtrl, () =>
-        confirm({ message: 'Configure these packages now?', initialValue: true, signal: proceedCtrl.signal })
+        confirm({ message: t('cli.configureNow'), initialValue: true, signal: proceedCtrl.signal })
       );
       if (proceedBack) {
         step = 3;
@@ -209,10 +216,10 @@ async function main() {
     perPackage = { security: null, secrets: null, sound: null, notification: null };
 
     const packageDescs = {
-      security: 'Warn/block risky commands',
-      secrets: 'Detect secret-like tokens',
-      sound: 'Play sounds for key events',
-      notification: 'OS notifications for key events'
+      security: t('cli.pkgSecurityHint'),
+      secrets: t('cli.pkgSecretsHint'),
+      sound: t('cli.pkgSoundHint'),
+      notification: t('cli.pkgNotificationHint')
     };
 
     const formatPackageList = (/** @type {string | null} */ highlightKey) =>
@@ -228,19 +235,19 @@ async function main() {
 
     // ── Step 4/5: configure (highlight current package) ──
     if (selected.includes('security')) {
-      note(formatPackageList('security'), `${pc.dim('Step 4/5')}  Configure packages`);
+      note(formatPackageList('security'), `${pc.dim(t('cli.stepFormat', { n: 4 }))}  ${t('cli.step4Configure')}`);
       perPackage.security = await planSecuritySetup({ action, projectDir, ui: 'umbrella' });
     }
     if (selected.includes('secrets')) {
-      note(formatPackageList('secrets'), `${pc.dim('Step 4/5')}  Configure packages`);
+      note(formatPackageList('secrets'), `${pc.dim(t('cli.stepFormat', { n: 4 }))}  ${t('cli.step4Configure')}`);
       perPackage.secrets = await planSecretsSetup({ action, projectDir, ui: 'umbrella' });
     }
     if (selected.includes('sound')) {
-      note(formatPackageList('sound'), `${pc.dim('Step 4/5')}  Configure packages`);
+      note(formatPackageList('sound'), `${pc.dim(t('cli.stepFormat', { n: 4 }))}  ${t('cli.step4Configure')}`);
       perPackage.sound = await planSoundSetup({ action, projectDir, ui: 'umbrella' });
     }
     if (selected.includes('notification')) {
-      note(formatPackageList('notification'), `${pc.dim('Step 4/5')}  Configure packages`);
+      note(formatPackageList('notification'), `${pc.dim(t('cli.stepFormat', { n: 4 }))}  ${t('cli.step4Configure')}`);
       perPackage.notification = await planNotificationSetup({ action, projectDir, ui: 'umbrella' });
     }
 
@@ -253,38 +260,38 @@ async function main() {
     }
 
     function summarizePlan(key, plan) {
-      if (!plan) return `${key}: (skipped)`;
-      if (action === 'uninstall') return `${key}: remove managed hooks`;
+      if (!plan) return `${key}: ${t('cli.summarySkipped')}`;
+      if (action === 'uninstall') return `${key}: ${t('cli.summaryRemoveHooks')}`;
 
       const events = plan.snippetHooks ? Object.keys(plan.snippetHooks) : [];
       const list = events.slice(0, 5);
       const tail = events.length > 5 ? ` +${events.length - 5} more` : '';
-      return `${key}: ${events.length} event(s)${events.length ? ` (${list.join(', ')}${tail})` : ''}`;
+      return `${key}: ${t('cli.summaryEvents', { count: events.length })}${events.length ? ` (${list.join(', ')}${tail})` : ''}`;
     }
 
     note(
       [
-        `${pc.dim('Step 5/5')}  Review`,
+        `${pc.dim(t('cli.stepFormat', { n: 5 }))}  ${t('cli.step5Review')}`,
         '',
-        `Action: ${pc.bold(action)}`,
-        `Target: ${pc.bold(target === 'global' ? 'global settings' : 'project-only')}`,
+        `${t('cli.reviewAction')}: ${pc.bold(action)}`,
+        `${t('cli.reviewTarget')}: ${pc.bold(target === 'global' ? t('cli.reviewTargetGlobal') : t('cli.reviewTargetProjectOnly'))}`,
         '',
-        `${pc.bold('Packages')}`,
+        `${pc.bold(t('cli.reviewPackages'))}`,
         ...selected.map((k) => `  - ${summarizePlan(k, perPackage[k])}`),
         '',
-        `${pc.bold('Files')}`,
+        `${pc.bold(t('cli.reviewFiles'))}`,
         ...files.map((f) => `  - ${f}`)
       ].join('\n'),
-      'Review'
+      t('cli.step5Review')
     );
 
     const applyCtrl = new AbortController();
     const { result: applyResult, wentBack: applyBack } = await withBackspaceBack(applyCtrl, () =>
       select({
-        message: 'Apply changes?',
+        message: t('cli.applyChanges'),
         options: [
-          { value: 'yes', label: 'Yes, apply' },
-          { value: 'cancel', label: 'Cancel (exit)' }
+          { value: 'yes', label: t('cli.applyYes') },
+          { value: 'cancel', label: t('cli.applyCancel') }
         ],
         signal: applyCtrl.signal
       })
@@ -293,7 +300,7 @@ async function main() {
       step = 3;
       continue;
     }
-    if (isCancel(applyResult) || applyResult === 'cancel') dieCancelled('No changes made');
+    if (isCancel(applyResult) || applyResult === 'cancel') dieCancelled(t('cli.noChanges'));
 
     break;
   }
@@ -301,7 +308,7 @@ async function main() {
   if (target === 'projectOnly') {
     // Write project config
     const s = spinner();
-    s.start('Writing project config...');
+    s.start(t('cli.writingProjectConfig'));
 
     // perPackage.*.projectConfigSection is shaped for claude-code-hooks.config.json sections.
     const projectCfg = await ensureProjectOnlyConfig(projectDir, selected, {
@@ -323,12 +330,12 @@ async function main() {
       }
     });
 
-    s.stop('Done');
+    s.stop(t('cli.done'));
 
-    note(JSON.stringify(snippetObj, null, 2), 'Paste into ~/.claude/settings.json (global)');
+    note(JSON.stringify(snippetObj, null, 2), t('cli.pasteSnippet'));
     await maybeWriteSnippet(projectDir, snippetObj);
 
-    outro(`Project config written: ${pc.bold(configFilePath(projectDir))}`);
+    outro(`${t('cli.projectConfigWritten')}: ${pc.bold(configFilePath(projectDir))}`);
     return;
   }
 
@@ -336,14 +343,14 @@ async function main() {
   const settingsPath = configPathForScope('global', projectDir);
   const res = await readJsonIfExists(settingsPath);
   if (!res.ok) {
-    cancel(`Could not read/parse JSON at ${settingsPath}`);
+    cancel(t('cli.couldNotReadJson', { path: settingsPath }));
     process.exit(1);
   }
 
   let settings = res.value;
 
   const s = spinner();
-  s.start('Applying changes to global settings...');
+  s.start(t('cli.applyingChanges'));
 
   for (const key of selected) {
     const plan = perPackage[key];
@@ -366,8 +373,8 @@ async function main() {
     });
   }
 
-  s.stop('Done');
-  outro(`Saved: ${pc.bold(settingsPath)}`);
+  s.stop(t('cli.done'));
+  outro(`${t('cli.saved')}: ${pc.bold(settingsPath)}`);
 }
 
 main().catch((err) => {

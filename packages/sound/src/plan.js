@@ -1,5 +1,5 @@
 import { intro, multiselect, select, text, spinner, isCancel, cancel, note } from '@clack/prompts';
-import { ansi as pc, configPathForScope, readJsonIfExists } from '@claude-code-hooks/core';
+import { ansi as pc, configPathForScope, readJsonIfExists, t } from '@claude-code-hooks/core';
 import {
   HOOK_EVENTS,
   applyMappingsToSettings,
@@ -10,8 +10,8 @@ import { ensureSoundsLoaded, listSoundsGrouped, invalidateSoundCache } from './s
 import { selectWithSoundPreview } from './select-with-preview.js';
 import { generateTts } from './tts.js';
 
-function dieCancelled(msg = 'Cancelled') {
-  cancel(msg);
+function dieCancelled(msg) {
+  cancel(msg ?? t('common.cancelled'));
   process.exit(0);
 }
 
@@ -40,13 +40,15 @@ function displaySoundId(soundId, labels) {
   return soundId;
 }
 
-const CATEGORY_OPTIONS = [
-  { value: 'common', label: 'Common' },
-  { value: 'game', label: 'Game' },
-  { value: 'ring', label: 'Ring' },
-  { value: 'custom', label: 'Custom (TTS & imported)' },
-  { value: '__create__', label: 'Create my own (text-to-speech)' }
-];
+function getCategoryOptions() {
+  return [
+    { value: 'common', label: t('sound.common') },
+    { value: 'game', label: t('sound.game') },
+    { value: 'ring', label: t('sound.ring') },
+    { value: 'custom', label: t('sound.custom') },
+    { value: '__create__', label: t('sound.createTts') }
+  ];
+}
 
 export async function planInteractiveSetup({ action, projectDir, ui = 'standalone' }) {
   if (action === 'uninstall') {
@@ -60,7 +62,7 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
 
   if (ui !== 'umbrella') {
     intro('sound');
-    note('Pick events and choose a sound for each. (You can keep this minimal.)', '@claude-code-hooks/sound');
+    note(t('sound.introHint'), t('sound.title'));
   }
 
   const baseDir = projectDir || process.cwd();
@@ -79,20 +81,20 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
   const { grouped, labels } = await listSoundsGrouped();
 
   const eventDescs = {
-    SessionStart: 'New session begins',
-    UserPromptSubmit: 'User sends a prompt',
-    PreToolUse: 'Before a tool runs',
-    PermissionRequest: 'Tool asks for permission',
-    PostToolUse: 'After a tool completes',
-    PostToolUseFailure: 'Tool execution failed',
-    Notification: 'Claude sends a notification',
-    SubagentStart: 'Sub-agent spawned',
-    SubagentStop: 'Sub-agent finished',
-    Stop: 'Claude stops responding',
-    TeammateIdle: 'Teammate becomes idle',
-    TaskCompleted: 'Task finished',
-    PreCompact: 'Before context compaction',
-    SessionEnd: 'Session ends'
+    SessionStart: t('soundEvents.SessionStart'),
+    UserPromptSubmit: t('soundEvents.UserPromptSubmit'),
+    PreToolUse: t('soundEvents.PreToolUse'),
+    PermissionRequest: t('soundEvents.PermissionRequest'),
+    PostToolUse: t('soundEvents.PostToolUse'),
+    PostToolUseFailure: t('soundEvents.PostToolUseFailure'),
+    Notification: t('soundEvents.Notification'),
+    SubagentStart: t('soundEvents.SubagentStart'),
+    SubagentStop: t('soundEvents.SubagentStop'),
+    Stop: t('soundEvents.Stop'),
+    TeammateIdle: t('soundEvents.TeammateIdle'),
+    TaskCompleted: t('soundEvents.TaskCompleted'),
+    PreCompact: t('soundEvents.PreCompact'),
+    SessionEnd: t('soundEvents.SessionEnd')
   };
 
   /** Build event options (flat list; keep labels short, details in hint). */
@@ -104,7 +106,7 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
       return {
         value: e,
         label: e,
-        hint: `${desc} • inherited: ${disp}`
+        hint: `${desc} • ${t('sound.inherited')}: ${disp}`
       };
     }
     return {
@@ -116,11 +118,10 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
 
   note(ui !== 'umbrella'
     ? `Hint shows meaning; “inherited” means already set in ~/.claude/settings.json`
-    : `Hint shows meaning (and inherited)`,
-  'Legend');
+    : t('sound.legendHintUmbrella'), t('sound.legend'));
 
   const enabledEvents = await multiselect({
-    message: '[sound] Which events should play sounds?',
+    message: t('sound.whichEvents'),
     options: eventOptions,
     required: false
   });
@@ -130,13 +131,12 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
   const mappings = {};
 
   for (const eventName of enabledEvents) {
-    // Pick category first (grouped UI). __create__ is always available for TTS.
-    const availableCats = CATEGORY_OPTIONS.filter(
+    const availableCats = getCategoryOptions().filter(
       (c) => c.value === '__create__' || (grouped[c.value]?.length ?? 0) > 0
     );
 
     const cat = await select({
-      message: `[sound] Category for ${pc.bold(eventName)}`,
+      message: t('sound.categoryFor', { event: eventName }),
       options: availableCats
     });
     if (isCancel(cat)) dieCancelled();
@@ -144,38 +144,37 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
     let soundId;
 
     if (cat === '__create__') {
-      // TTS flow: language → text → generate
       const langChoice = await select({
-        message: `[sound] Language for TTS (${eventName})`,
+        message: t('sound.languageForTts', { event: eventName }),
         options: [
-          { value: 'en', label: 'English (default)' },
-          { value: 'ko', label: 'Korean (한국어)' }
+          { value: 'en', label: t('sound.langEn') },
+          { value: 'ko', label: t('sound.langKo') }
         ]
       });
       if (isCancel(langChoice)) dieCancelled();
 
       const textInput = await text({
-        message: `[sound] Enter text to speak${langChoice === 'ko' ? ' (e.g. "클로드가 준비됐어요!")' : ' (e.g. "Claude is ready!")'}`,
-        placeholder: langChoice === 'ko' ? '클로드가 준비됐어요!' : 'Claude is ready!',
+        message: `[sound] Enter text to speak${langChoice === 'ko' ? t('sound.enterTextKo') : t('sound.enterTextEn')}`,
+        placeholder: langChoice === 'ko' ? t('sound.placeholderKo') : t('sound.placeholderEn'),
         validate: (v) => {
-          if (!v?.trim()) return 'Text cannot be empty';
-          if (v.length > 200) return 'Keep it under 200 characters';
+          if (!v?.trim()) return t('sound.textEmpty');
+          if (v.length > 200) return t('sound.textTooLong');
           return undefined;
         }
       });
       if (isCancel(textInput)) dieCancelled();
 
       const s = spinner();
-      s.start('Generating speech...');
+      s.start(t('sound.generatingSpeech'));
       try {
         const result = await generateTts(textInput, { lang: langChoice });
         invalidateSoundCache();
-        await ensureSoundsLoaded(); // Rebuild cache so selectWithSoundPreview works for next event
+        await ensureSoundsLoaded();
         soundId = result.soundId;
-        s.stop('Done');
+        s.stop(t('common.done'));
       } catch (err) {
         s.stop('Failed');
-        note(String(err?.message ?? err), 'Error');
+        note(String(err?.message ?? err), t('common.error'));
         continue;
       }
     } else {
@@ -188,7 +187,7 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
       }));
 
       soundId = await selectWithSoundPreview({
-        message: `[sound] Sound for ${pc.bold(eventName)}`,
+        message: t('sound.soundFor', { event: eventName }),
         options
       });
       if (isCancel(soundId)) dieCancelled();

@@ -1,5 +1,5 @@
 import { intro, outro, select, multiselect, confirm, isCancel, cancel, note, spinner } from '@clack/prompts';
-import { ansi as pc, SCOPE_OPTIONS, upsertConfigSection } from '@claude-code-hooks/core';
+import { ansi as pc, t, upsertConfigSection } from '@claude-code-hooks/core';
 import {
   HOOK_EVENTS,
   configPathForScope,
@@ -19,84 +19,90 @@ export async function interactiveSetup() {
   const cfgExists = cfgRes.ok && cfgRes.exists;
 
   if (cfgExists) {
-    note(`Found existing ${pc.bold('claude-code-hooks.config.json')} — using it to pre-fill defaults.`, 'Config detected');
+    note(t('common.configFound'), t('common.configDetected'));
   }
 
+  const SCOPE_OPTIONS_I18N = [
+    { value: 'project', label: t('common.scopeProject') },
+    { value: 'projectLocal', label: t('common.scopeProjectLocal') },
+    { value: 'global', label: t('common.scopeGlobal') }
+  ];
+
   const scope = await select({
-    message: 'Write hook settings to:',
-    options: SCOPE_OPTIONS
+    message: t('common.scopeWriteTo'),
+    options: SCOPE_OPTIONS_I18N
   });
 
   if (isCancel(scope)) {
-    cancel('Cancelled');
+    cancel(t('common.cancelled'));
     process.exit(0);
   }
 
   const defaultMode = existingCfg?.mode || 'warn';
   const mode = await select({
-    message: 'When a secret-like token is found…',
+    message: t('secrets.whenSecretFound'),
     initialValue: defaultMode,
     options: [
-      { value: 'warn', label: 'Warn (recommended)' },
-      { value: 'block', label: 'Block HIGH findings (exit 2)', hint: 'Private key material' }
+      { value: 'warn', label: t('secrets.warnRecommended') },
+      { value: 'block', label: t('secrets.blockHigh'), hint: t('secrets.blockHint') }
     ]
   });
 
   if (isCancel(mode)) {
-    cancel('Cancelled');
+    cancel(t('common.cancelled'));
     process.exit(0);
   }
 
   const defaultEvents = existingCfg?.enabledEvents || HOOK_EVENTS;
   const enabledEvents = await multiselect({
-    message: 'Events to scan',
+    message: t('secrets.eventsToScan'),
     options: HOOK_EVENTS.map((e) => ({ value: e, label: e })),
     initialValues: defaultEvents.filter((e) => HOOK_EVENTS.includes(e)),
     required: false
   });
 
   if (isCancel(enabledEvents)) {
-    cancel('Cancelled');
+    cancel(t('common.cancelled'));
     process.exit(0);
   }
 
   const defaultScanGitCommit = existingCfg?.scanGitCommit ?? false;
   const scanGitCommit = await confirm({
-    message: `Scan staged files on ${pc.bold('git commit')}?`,
+    message: t('secrets.scanGitCommit'),
     initialValue: defaultScanGitCommit
   });
 
   if (isCancel(scanGitCommit)) {
-    cancel('Cancelled');
+    cancel(t('common.cancelled'));
     process.exit(0);
   }
 
   const action = await select({
-    message: 'Apply changes or uninstall?',
+    message: t('secrets.applyOrUninstall'),
     options: [
-      { value: 'apply', label: 'Apply (write settings)' },
-      { value: 'remove', label: 'Remove all claude-secrets hooks' },
-      { value: 'exit', label: 'Exit (no changes)' }
+      { value: 'apply', label: t('secrets.applyWrite') },
+      { value: 'remove', label: t('secrets.removeHooks') },
+      { value: 'exit', label: t('secrets.exitNoChanges') }
     ]
   });
 
   if (isCancel(action) || action === 'exit') {
-    cancel('No changes written');
+    cancel(t('common.noChangesWritten'));
     process.exit(0);
   }
 
   const settingsPath = configPathForScope(scope, projectDir);
   const existingRes = await readJsonIfExists(settingsPath);
   if (!existingRes.ok) {
-    cancel(`Could not read/parse JSON at ${settingsPath}`);
-    note(String(existingRes.error?.message || existingRes.error), 'Error');
+    cancel(t('cli.couldNotReadJson', { path: settingsPath }));
+    note(String(existingRes.error?.message || existingRes.error), t('common.error'));
     process.exit(1);
   }
 
   let settings = existingRes.value;
 
   const s = spinner();
-  s.start('Writing settings...');
+  s.start(t('common.writingSettings'));
 
   if (action === 'remove') {
     settings = removeAllManagedSecretsHooks(settings);
@@ -112,8 +118,8 @@ export async function interactiveSetup() {
     await writeProjectConfig(nextCfg, projectDir);
   }
 
-  s.stop('Done');
+  s.stop(t('common.done'));
 
   const cfgPath = configFilePath(projectDir);
-  outro(`Saved hooks to ${pc.bold(settingsPath)}\n` + (action === 'apply' ? `  Config saved to ${pc.bold(cfgPath)}` : ''));
+  outro(`${t('common.savedHooksTo')} ${pc.bold(settingsPath)}\n` + (action === 'apply' ? `  ${t('common.configSavedTo')} ${pc.bold(cfgPath)}` : ''));
 }

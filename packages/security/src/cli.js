@@ -70,6 +70,10 @@ async function cmdRun() {
 
 async function main() {
   const args = process.argv.slice(2);
+  const langIdx = args.indexOf('--lang');
+  if (langIdx !== -1 && args[langIdx + 1]) {
+    process.env.CLAUDE_CODE_HOOKS_LANG = args[langIdx + 1].toLowerCase().slice(0, 2);
+  }
   if (args.includes('-h') || args.includes('--help')) usage(0);
 
   const cmd = args[0];

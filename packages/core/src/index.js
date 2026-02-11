@@ -1,4 +1,5 @@
 export { ansi } from './ansi.js';
+export { t, loadLocale, detectLanguage } from './i18n.js';
 export {
   CONFIG_FILENAME,
   configFilePath,

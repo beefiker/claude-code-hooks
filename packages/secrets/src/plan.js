@@ -1,10 +1,10 @@
 import { select, multiselect, confirm, isCancel, cancel, note } from '@clack/prompts';
-import { ansi as pc, upsertConfigSection } from '@claude-code-hooks/core';
+import { ansi as pc, upsertConfigSection, t } from '@claude-code-hooks/core';
 import { readProjectConfig, resolveSecretsConfig } from './config.js';
 import { HOOK_EVENTS, applySecretsToSettings, removeAllManagedSecretsHooks, buildManagedCommand } from './hooks.js';
 
-function dieCancelled(msg = 'Cancelled') {
-  cancel(msg);
+function dieCancelled(msg) {
+  cancel(msg ?? t('common.cancelled'));
   process.exit(0);
 }
 
@@ -30,7 +30,7 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
   const cfgExists = cfgRes.ok && cfgRes.exists;
 
   if (cfgExists && ui !== 'umbrella') {
-    note(`Found existing ${pc.bold('claude-code-hooks.config.json')} — using it to pre-fill defaults.`, 'Secrets');
+    note(t('common.configFound'), t('secrets.title'));
   }
 
   if (action === 'uninstall') {
@@ -44,25 +44,25 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
 
   const defaultMode = existingCfg?.mode || 'warn';
   const mode = await select({
-    message: `${pc.bold('secrets')}  When a secret-like token is found…`,
+    message: `${pc.bold('secrets')}  ${t('secrets.whenSecretFound')}`,
     initialValue: defaultMode,
     options: [
-      { value: 'warn', label: `Warn (recommended)` },
-      { value: 'block', label: `Block HIGH findings (exit 2)`, hint: 'Private key material' }
+      { value: 'warn', label: t('secrets.warnRecommended') },
+      { value: 'block', label: t('secrets.blockHigh'), hint: t('secrets.blockHint') }
     ]
   });
   if (isCancel(mode)) dieCancelled();
 
   const eventDescs = {
-    PreToolUse: 'Before a tool runs',
-    PermissionRequest: 'Tool asks for permission'
+    PreToolUse: t('secrets.eventPreToolUse'),
+    PermissionRequest: t('secrets.eventPermissionRequest')
   };
 
   // Note removed: HIGH-only scope is explained in the mode option text.
 
   const defaultEvents = existingCfg?.enabledEvents || HOOK_EVENTS;
   const enabledEvents = await multiselect({
-    message: `${pc.bold('secrets')}  Events to scan`,
+    message: `${pc.bold('secrets')}  ${t('secrets.eventsToScan')}`,
     options: HOOK_EVENTS.map((e) => ({ value: e, label: `${e} ${pc.dim('—')} ${pc.dim(eventDescs[e] || '')}` })),
     initialValues: defaultEvents.filter((e) => HOOK_EVENTS.includes(e)),
     required: false
@@ -71,7 +71,7 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
 
   const defaultScanGitCommit = existingCfg?.scanGitCommit ?? false;
   const scanGitCommit = await confirm({
-    message: `${pc.bold('secrets')}  Scan staged files on ${pc.bold('git commit')}?`,
+    message: `${pc.bold('secrets')}  ${t('secrets.scanGitCommit')}`,
     initialValue: defaultScanGitCommit
   });
   if (isCancel(scanGitCommit)) dieCancelled();
