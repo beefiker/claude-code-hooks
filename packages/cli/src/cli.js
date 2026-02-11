@@ -14,7 +14,8 @@ import {
   isCancel,
   cancel,
   note,
-  spinner
+  spinner,
+  updateSettings
 } from '@clack/prompts';
 
 // Enable keypress events so we can intercept Backspace
@@ -35,6 +36,16 @@ import {
   t,
   detectLanguage
 } from '@claude-code-hooks/core';
+
+// Apply localized messages for Clack prompts (cancel, error)
+if (detectLanguage() !== 'en') {
+  updateSettings({
+    messages: {
+      cancel: t('common.cancelled'),
+      error: t('common.error')
+    }
+  });
+}
 
 import { buildSettingsSnippet } from './snippet.js';
 
@@ -181,6 +192,7 @@ async function main() {
           message: `${pc.dim(t('cli.stepFormat', { n: 3 }))}  ${t('cli.step3SelectPackages')}`,
           options: packageOptions,
           required: true,
+          validate: (v) => (!v || v.length === 0) ? t('common.selectAtLeastOne') : true,
           signal: pkgsCtrl.signal
         })
       );

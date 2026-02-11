@@ -1,10 +1,10 @@
 import { intro, multiselect, isCancel, cancel, note } from '@clack/prompts';
-import { ansi as pc } from '@claude-code-hooks/core';
+import { ansi as pc, t } from '@claude-code-hooks/core';
 
 import { HOOK_EVENTS, applyEventsToSettings, buildManagedCommand, getExistingManagedEvents } from './hooks.js';
 
-function dieCancelled(msg = 'Cancelled') {
-  cancel(msg);
+function dieCancelled(msg) {
+  cancel(msg ?? t('common.cancelled'));
   process.exit(0);
 }
 
@@ -35,8 +35,8 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
   }
 
   if (ui !== 'umbrella') {
-    intro('notification');
-    note('Pick events to trigger OS notifications. (Keep it minimal.)', '@claude-code-hooks/notification');
+    intro(t('notification.title'));
+    note(t('notification.introHint'), t('notification.title'));
   }
 
   // Inheritance: show which events are already enabled globally (managed by us).
@@ -54,34 +54,34 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
   }
 
   const eventDescs = {
-    SessionStart: 'Session begins or resumes',
-    UserPromptSubmit: 'You submit a prompt',
-    PreToolUse: 'Before a tool runs',
-    PermissionRequest: 'Permission dialog appears',
-    PostToolUse: 'Tool call succeeds',
-    PostToolUseFailure: 'Tool call fails',
-    Notification: 'Claude Code sends a notification',
-    SubagentStart: 'Sub-agent spawned',
-    SubagentStop: 'Sub-agent finishes',
-    Stop: 'Claude finishes responding',
-    TeammateIdle: 'Teammate about to go idle',
-    TaskCompleted: 'Task marked completed',
-    PreCompact: 'Before context compaction',
-    SessionEnd: 'Session terminates'
+    SessionStart: t('notification.eventSessionStart'),
+    UserPromptSubmit: t('notification.eventUserPromptSubmit'),
+    PreToolUse: t('notification.eventPreToolUse'),
+    PermissionRequest: t('notification.eventPermissionRequest'),
+    PostToolUse: t('notification.eventPostToolUse'),
+    PostToolUseFailure: t('notification.eventPostToolUseFailure'),
+    Notification: t('notification.eventNotification'),
+    SubagentStart: t('notification.eventSubagentStart'),
+    SubagentStop: t('notification.eventSubagentStop'),
+    Stop: t('notification.eventStop'),
+    TeammateIdle: t('notification.eventTeammateIdle'),
+    TaskCompleted: t('notification.eventTaskCompleted'),
+    PreCompact: t('notification.eventPreCompact'),
+    SessionEnd: t('notification.eventSessionEnd')
   };
 
   const eventOptions = HOOK_EVENTS.map((e) => {
     const desc = eventDescs[e] || '';
-    const hint = inherited.has(e) ? `${desc} • inherited` : desc;
+    const hint = inherited.has(e) ? `${desc} • ${t('sound.inherited')}` : desc;
     return { value: e, label: e, hint };
   });
 
   if (ui !== 'umbrella') {
-    note('Notification will no-op in remote/headless environments; it falls back to stdout.', 'Note');
+    note(t('notification.noteHeadless'), t('notification.note'));
   }
 
   const enabledEvents = await multiselect({
-    message: `${pc.bold('notification')}  Events that should show OS notifications`,
+    message: `${pc.bold('notification')}  ${t('notification.eventsForNotifications')}`,
     options: eventOptions,
     required: false
   });

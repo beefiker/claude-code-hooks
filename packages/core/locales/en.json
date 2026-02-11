@@ -61,7 +61,8 @@
     "done": "Done",
     "error": "Error",
     "savedHooksTo": "Saved hooks to",
-    "configSavedTo": "Config saved to"
+    "configSavedTo": "Config saved to",
+    "selectAtLeastOne": "Please select at least one option"
   },
   "security": {
     "title": "Security",
