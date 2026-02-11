@@ -1,6 +1,6 @@
 {
   "name": "@claude-code-hooks/sound",
-  "version": "0.2.12",
+  "version": "0.2.13",
   "description": "Configure Claude Code hooks to play bundled sounds (macOS, Windows, Linux).",
   "license": "MIT",
   "homepage": "https://github.com/beefiker/claude-code-hooks/tree/main/packages/sound",
@@ -33,7 +33,7 @@
   "dependencies": {
     "@clack/prompts": "^1.0.0",
     "@clack/core": "^1.0.0",
-    "@claude-code-hooks/core": "0.1.3"
+    "@claude-code-hooks/core": "^0.1.4"
   },
   "keywords": [
     "claude",
