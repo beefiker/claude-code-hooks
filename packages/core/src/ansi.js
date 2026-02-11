@@ -23,5 +23,10 @@ export const ansi = {
   green: (s) => wrap('\u001b[32m', '\u001b[39m', s),
   yellow: (s) => wrap('\u001b[33m', '\u001b[39m', s),
   cyan: (s) => wrap('\u001b[36m', '\u001b[39m', s),
+  magenta: (s) => wrap('\u001b[35m', '\u001b[39m', s),
+  /** Deep blue, bright (DodgerBlue #0087ff) - for highlights */
+  blue: (s) => wrap('\u001b[38;5;33m', '\u001b[39m', s),
+  /** Bright cyan for accents */
+  brightCyan: (s) => wrap('\u001b[38;5;51m', '\u001b[39m', s),
   gray: (s) => wrap('\u001b[90m', '\u001b[39m', s)
 };

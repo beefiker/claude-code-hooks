@@ -1,6 +1,6 @@
 {
   "name": "@claude-code-hooks/core",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Zero-dependency shared utilities for claude-code-hooks packages.",
   "license": "MIT",
   "homepage": "https://github.com/beefiker/claude-code-hooks/tree/main/packages/core",

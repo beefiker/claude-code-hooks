@@ -69,7 +69,9 @@ export async function interactiveSetup() {
   const defaultScanGitCommit = existingCfg?.scanGitCommit ?? false;
   const scanGitCommit = await confirm({
     message: t('secrets.scanGitCommit'),
-    initialValue: defaultScanGitCommit
+    initialValue: defaultScanGitCommit,
+    active: t('common.yes'),
+    inactive: t('common.no')
   });
 
   if (isCancel(scanGitCommit)) {

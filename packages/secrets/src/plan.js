@@ -72,7 +72,9 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
   const defaultScanGitCommit = existingCfg?.scanGitCommit ?? false;
   const scanGitCommit = await confirm({
     message: `${pc.bold('secrets')}  ${t('secrets.scanGitCommit')}`,
-    initialValue: defaultScanGitCommit
+    initialValue: defaultScanGitCommit,
+    active: t('common.yes'),
+    inactive: t('common.no')
   });
   if (isCancel(scanGitCommit)) dieCancelled();
 

@@ -2,11 +2,15 @@
 
 import process from 'node:process';
 import readline from 'node:readline';
-import fs from 'node:fs/promises';
 import path from 'node:path';
+import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
+
+const require = createRequire(import.meta.url);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 import {
-  intro,
   outro,
   select,
   multiselect,
@@ -28,8 +32,6 @@ import {
   configPathForScope,
   readJsonIfExists,
   writeJson,
-  CONFIG_FILENAME,
-  configFilePath,
   readProjectConfig,
   writeProjectConfig,
   removeLegacyClaudeSoundHooks,
@@ -47,8 +49,6 @@ if (detectLanguage() !== 'en') {
   });
 }
 
-import { buildSettingsSnippet } from './snippet.js';
-
 // In-workspace imports (when running from monorepo) and normal Node resolution
 // (when installed from npm) both resolve these packages.
 import { planInteractiveSetup as planSecuritySetup } from '@claude-code-hooks/security/src/plan.js';
@@ -59,6 +59,51 @@ import { planInteractiveSetup as planNotificationSetup } from '@claude-code-hook
 function dieCancelled(msg) {
   cancel(msg ?? t('cli.cancelled'));
   process.exit(0);
+}
+
+function showWelcome() {
+  let version = '';
+  try {
+    const pkg = require(path.join(__dirname, '..', 'package.json'));
+    version = pkg.version ? ` v${pkg.version}` : '';
+  } catch {
+    // ignore
+  }
+
+  const width = 48;
+  const pad = '\n';
+  const particles = ['·', '•', '✦', '✧', '◦', '▪', 'º', '∗'];
+  const colors = [pc.blue, pc.cyan, pc.yellow, pc.magenta, pc.green];
+
+  const particleLine = (seed) => {
+    const len = width - 2;
+    let s = '  ';
+    for (let i = 0; i < len; i++) {
+      const show =
+        ((i * 17 + seed) % 5 === 0) ||
+        ((i * 13 + seed + 3) % 6 === 0) ||
+        ((i * 11 + seed + 1) % 4 === 0) ||
+        ((i * 19 + seed + 5) % 7 === 0);
+      s += show ? colors[(i + seed) % colors.length](particles[(i + seed) % particles.length]) : ' ';
+    }
+    return s + '\n';
+  };
+
+  const icon = pc.blue('◆');
+  const line = `  ${pc.blue('═')}${pc.cyan('═'.repeat(width - 4))}${pc.blue('═')}`;
+  const lineBottom = `  ${pc.yellow('═')}${pc.magenta('═'.repeat(width - 4))}${pc.yellow('═')}`;
+
+  process.stdout.write(pad);
+  process.stdout.write(particleLine(0));
+  process.stdout.write(line + pad);
+  process.stdout.write(pad);
+  process.stdout.write(`  ${icon}  ${pc.blue(pc.bold('claude-code-hooks'))}${version ? pc.gray(version) : ''}\n`);
+  process.stdout.write(pad);
+  process.stdout.write(`  ${pc.brightCyan('Customize Claude Code with zero dependencies')}\n`);
+  process.stdout.write(pad);
+  process.stdout.write(lineBottom + pad);
+  process.stdout.write(particleLine(5));
+  process.stdout.write(pad);
 }
 
 /**
@@ -90,6 +135,47 @@ function usage(exitCode = 0) {
   process.exit(exitCode);
 }
 
+const GITIGNORE_LOCAL_ENTRY = '.claude/settings.local.json';
+
+/**
+ * Returns true if the trimmed gitignore line would cause settings.local.json to be ignored.
+ */
+function wouldIgnoreLocalSettings(line) {
+  const t = line.replace(/#.*$/, '').trim();
+  if (!t) return false;
+  if (t === GITIGNORE_LOCAL_ENTRY || t === '**/' + GITIGNORE_LOCAL_ENTRY) return true;
+  if (t === '.claude/' || t === '.claude' || t === '**/.claude/' || t === '**/.claude') return true;
+  if (t === '.claude/*' || t === '.claude/**' || t.includes('**/.claude')) return true;
+  if (t.includes('settings.local.json')) return true;
+  return false;
+}
+
+/**
+ * Ensures .gitignore in projectDir contains an entry to ignore settings.local.json.
+ * Called when user selects project (local) so their per-developer settings stay untracked.
+ * Never throws: catches all errors to avoid crashing the CLI.
+ */
+async function ensureGitignoreLocalEntry(projectDir) {
+  try {
+    const gitignorePath = path.join(projectDir, '.gitignore');
+    let content = '';
+    try {
+      content = await fs.readFile(gitignorePath, 'utf-8');
+    } catch (err) {
+      if (err?.code !== 'ENOENT') return;
+    }
+
+    const lines = content.split(/\r?\n/);
+    if (lines.some(wouldIgnoreLocalSettings)) return;
+
+    const needsNewline = content.length > 0 && !content.endsWith('\n');
+    const block = '\n# claude-code-hooks: per-developer local settings\n' + GITIGNORE_LOCAL_ENTRY + '\n';
+    await fs.appendFile(gitignorePath, (needsNewline ? '\n' : '') + block);
+  } catch {
+    // EACCES, EPERM, ENOSPC, etc. — don't crash CLI; settings were already written
+  }
+}
+
 async function ensureProjectOnlyConfig(projectDir, selected, perPackageConfig) {
   const cfgRes = await readProjectConfig(projectDir);
   const rawCfg = cfgRes.ok ? { ...(cfgRes.value || {}) } : {};
@@ -107,19 +193,6 @@ async function ensureProjectOnlyConfig(projectDir, selected, perPackageConfig) {
   return out;
 }
 
-async function maybeWriteSnippet(projectDir, snippetObj) {
-  const ok = await confirm({
-    message: t('cli.writeSnippet'),
-    initialValue: false
-  });
-  if (isCancel(ok)) return;
-  if (!ok) return;
-
-  const filePath = path.join(projectDir, 'claude-code-hooks.snippet.json');
-  await fs.writeFile(filePath, JSON.stringify(snippetObj, null, 2) + '\n');
-  note(filePath, t('cli.wroteSnippet'));
-}
-
 async function main() {
   const args = process.argv.slice(2);
   if (args.includes('-h') || args.includes('--help')) usage(0);
@@ -132,7 +205,7 @@ async function main() {
 
   const projectDir = process.cwd();
 
-  intro('claude-code-hooks');
+  showWelcome();
   note(t('cli.navHint'), t('cli.navTitle'));
 
   // ── Step 1–3: action, target, packages (Backspace = go to previous step) ──
@@ -171,7 +244,8 @@ async function main() {
           message: `${pc.dim(t('cli.stepFormat', { n: 2 }))}  ${t('cli.step2ChooseTarget')}`,
           options: [
             { value: 'global', label: t('cli.targetGlobal') },
-            { value: 'projectOnly', label: t('cli.targetProjectOnly').replace(CONFIG_FILENAME, pc.bold(CONFIG_FILENAME)) }
+            { value: 'project', label: t('common.scopeProject') },
+            { value: 'projectLocal', label: t('common.scopeProjectLocal') }
           ],
           signal: targetCtrl.signal
         })
@@ -208,7 +282,7 @@ async function main() {
     if (step === 4) {
       const proceedCtrl = new AbortController();
       const { result: proceedResult, wentBack: proceedBack } = await withBackspaceBack(proceedCtrl, () =>
-        confirm({ message: t('cli.configureNow'), initialValue: true, signal: proceedCtrl.signal })
+        confirm({ message: t('cli.configureNow'), initialValue: true, active: t('common.yes'), inactive: t('common.no'), signal: proceedCtrl.signal })
       );
       if (proceedBack) {
         step = 3;
@@ -239,7 +313,7 @@ async function main() {
         .map(
           (k) => {
             const desc = pc.dim(packageDescs[k] || '');
-            const label = highlightKey === k ? pc.cyan(pc.bold(k)) : pc.bold(k);
+            const label = highlightKey === k ? pc.blue(pc.bold(k)) : pc.bold(k);
             return `${label}: ${desc}`;
           }
         )
@@ -266,10 +340,8 @@ async function main() {
     // ── Step 5/5: review ──
     const files = [];
     if (target === 'global') files.push(configPathForScope('global', projectDir));
-    if (target === 'projectOnly') {
-      files.push(path.join(projectDir, CONFIG_FILENAME));
-      files.push(path.join(projectDir, 'claude-code-hooks.snippet.json (optional)'));
-    }
+    if (target === 'project') files.push(configPathForScope('project', projectDir));
+    if (target === 'projectLocal') files.push(configPathForScope('projectLocal', projectDir));
 
     function summarizePlan(key, plan) {
       if (!plan) return `${key}: ${t('cli.summarySkipped')}`;
@@ -286,7 +358,11 @@ async function main() {
         `${pc.dim(t('cli.stepFormat', { n: 5 }))}  ${t('cli.step5Review')}`,
         '',
         `${t('cli.reviewAction')}: ${pc.bold(action)}`,
-        `${t('cli.reviewTarget')}: ${pc.bold(target === 'global' ? t('cli.reviewTargetGlobal') : t('cli.reviewTargetProjectOnly'))}`,
+        `${t('cli.reviewTarget')}: ${pc.bold(
+          target === 'global' ? t('cli.reviewTargetGlobal') :
+          target === 'project' ? t('cli.reviewTargetProject') :
+          t('cli.reviewTargetProjectLocal')
+        )}`,
         '',
         `${pc.bold(t('cli.reviewPackages'))}`,
         ...selected.map((k) => `  - ${summarizePlan(k, perPackage[k])}`),
@@ -317,42 +393,8 @@ async function main() {
     break;
   }
 
-  if (target === 'projectOnly') {
-    // Write project config
-    const s = spinner();
-    s.start(t('cli.writingProjectConfig'));
-
-    // perPackage.*.projectConfigSection is shaped for claude-code-hooks.config.json sections.
-    const projectCfg = await ensureProjectOnlyConfig(projectDir, selected, {
-      security: perPackage.security?.projectConfigSection,
-      secrets: perPackage.secrets?.projectConfigSection,
-      sound: perPackage.sound?.projectConfigSection,
-      notification: perPackage.notification?.projectConfigSection
-    });
-
-    // Print snippet for user to paste into global settings.
-    const snippetObj = buildSettingsSnippet({
-      projectDir,
-      selected,
-      packagePlans: {
-        security: perPackage.security,
-        secrets: perPackage.secrets,
-        sound: perPackage.sound,
-        notification: perPackage.notification
-      }
-    });
-
-    s.stop(t('cli.done'));
-
-    note(JSON.stringify(snippetObj, null, 2), t('cli.pasteSnippet'));
-    await maybeWriteSnippet(projectDir, snippetObj);
-
-    outro(`${t('cli.projectConfigWritten')}: ${pc.bold(configFilePath(projectDir))}`);
-    return;
-  }
-
-  // Global apply: read settings.json, apply transforms, write once.
-  const settingsPath = configPathForScope('global', projectDir);
+  // Global / project / projectLocal apply: read settings.json, apply transforms, write once.
+  const settingsPath = configPathForScope(target, projectDir);
   const res = await readJsonIfExists(settingsPath);
   if (!res.ok) {
     cancel(t('cli.couldNotReadJson', { path: settingsPath }));
@@ -374,6 +416,10 @@ async function main() {
   settings = removeLegacyClaudeSoundHooks(settings);
 
   await writeJson(settingsPath, settings);
+
+  if (target === 'projectLocal') {
+    await ensureGitignoreLocalEntry(projectDir);
+  }
 
   // Update project config only on setup.
   if (action === 'setup') {
