@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import process from 'node:process';
+import readline from 'node:readline';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -16,6 +17,11 @@ import {
   spinner
 } from '@clack/prompts';
 
+// Enable keypress events so we can intercept Backspace
+if (process.stdin.isTTY) {
+  readline.emitKeypressEvents(process.stdin);
+}
+
 import {
   ansi as pc,
   configPathForScope,
@@ -24,7 +30,8 @@ import {
   CONFIG_FILENAME,
   configFilePath,
   readProjectConfig,
-  writeProjectConfig
+  writeProjectConfig,
+  removeLegacyClaudeSoundHooks
 } from '@claude-code-hooks/core';
 
 import { buildSettingsSnippet } from './snippet.js';
@@ -39,6 +46,30 @@ import { planInteractiveSetup as planNotificationSetup } from '@claude-code-hook
 function dieCancelled(msg = 'Cancelled') {
   cancel(msg);
   process.exit(0);
+}
+
+/**
+ * Run a prompt with Backspace = go back. When Backspace is pressed, aborts and returns
+ * { wentBack: true }. ESC still exits. Caller must handle wentBack by continuing the loop.
+ * @param {AbortController} controller
+ * @param {() => Promise<T>} runPrompt - async function that runs the prompt (receives no args)
+ * @returns {Promise<{ result: T; wentBack: boolean }>}
+ */
+async function withBackspaceBack(controller, runPrompt) {
+  let wentBack = false;
+  const handler = (_str, key) => {
+    if (key?.name === 'backspace') {
+      wentBack = true;
+      controller.abort();
+    }
+  };
+  process.stdin.on('keypress', handler);
+  try {
+    const result = await runPrompt();
+    return { result, wentBack };
+  } finally {
+    process.stdin.off('keypress', handler);
+  }
 }
 
 function usage(exitCode = 0) {
@@ -84,115 +115,188 @@ async function main() {
   const projectDir = process.cwd();
 
   intro('claude-code-hooks');
+  note(`${pc.dim('ESC')} to exit  •  ${pc.dim('Backspace')} to go back`, 'Navigation');
 
-  // ── Step 1–3: action, target, packages (with simple back navigation) ──
+  // ── Step 1–3: action, target, packages (Backspace = go to previous step) ──
   let action;
   let target;
   let selected;
+  let step = 1;
+  /** @type {{ security: unknown; secrets: unknown; sound: unknown; notification: unknown }} */
+  let perPackage = { security: null, secrets: null, sound: null, notification: null };
+
+  const packageOptions = [
+    { value: 'security', label: '@claude-code-hooks/security', hint: 'Warn/block risky commands' },
+    { value: 'secrets', label: '@claude-code-hooks/secrets', hint: 'Detect secret-like tokens' },
+    { value: 'sound', label: '@claude-code-hooks/sound', hint: 'Play sounds for key events' },
+    { value: 'notification', label: '@claude-code-hooks/notification', hint: 'OS notifications for key events' }
+  ];
 
   while (true) {
-    action = await select({
-      message: `${pc.dim('Step 1/5')}  Choose an action`,
-      options: [
-        { value: 'setup', label: 'Install / update packages' },
-        { value: 'uninstall', label: 'Uninstall (remove managed hooks)' },
-        { value: 'exit', label: 'Exit' }
-      ]
-    });
-    if (isCancel(action) || action === 'exit') dieCancelled('Bye');
+    if (step === 1) {
+      action = await select({
+        message: `${pc.dim('Step 1/5')}  Choose an action`,
+        options: [
+          { value: 'setup', label: 'Install / update packages' },
+          { value: 'uninstall', label: 'Uninstall (remove managed hooks)' },
+          { value: 'exit', label: 'Exit' }
+        ]
+      });
+      if (isCancel(action) || action === 'exit') dieCancelled('Bye');
+      step = 2;
+    }
 
-    target = await select({
-      message: `${pc.dim('Step 2/5')}  Choose a target`,
-      options: [
-        { value: 'global', label: `Global (default): ${pc.dim('~/.claude/settings.json')}` },
-        { value: 'projectOnly', label: `Project-only: write ${pc.bold(CONFIG_FILENAME)} + print a snippet` },
-        { value: '__back__', label: 'Back' }
-      ]
-    });
-    if (isCancel(target)) dieCancelled();
-    if (target === '__back__') continue;
+    if (step === 2) {
+      const targetCtrl = new AbortController();
+      const { result: targetResult, wentBack: targetBack } = await withBackspaceBack(targetCtrl, () =>
+        select({
+          message: `${pc.dim('Step 2/5')}  Choose a target`,
+          options: [
+            { value: 'global', label: `Global (default): ${pc.dim('~/.claude/settings.json')}` },
+            { value: 'projectOnly', label: `Project-only: write ${pc.bold(CONFIG_FILENAME)} + print a snippet` }
+          ],
+          signal: targetCtrl.signal
+        })
+      );
+      if (targetBack) {
+        step = 1;
+        continue;
+      }
+      if (isCancel(targetResult)) dieCancelled();
+      target = targetResult;
+      step = 3;
+    }
 
-    selected = await multiselect({
-      message: `${pc.dim('Step 3/5')}  Select packages`,
-      options: [
-        { value: 'security', label: '@claude-code-hooks/security', hint: 'Warn/block risky commands' },
-        { value: 'secrets', label: '@claude-code-hooks/secrets', hint: 'Detect secret-like tokens' },
-        { value: 'sound', label: '@claude-code-hooks/sound', hint: 'Play sounds for key events' },
-        { value: 'notification', label: '@claude-code-hooks/notification', hint: 'OS notifications for key events' }
-      ],
-      required: true
-    });
-    if (isCancel(selected)) dieCancelled();
+    if (step === 3) {
+      const pkgsCtrl = new AbortController();
+      const { result: pkgsResult, wentBack: pkgsBack } = await withBackspaceBack(pkgsCtrl, () =>
+        multiselect({
+          message: `${pc.dim('Step 3/5')}  Select packages`,
+          options: packageOptions,
+          required: true,
+          signal: pkgsCtrl.signal
+        })
+      );
+      if (pkgsBack) {
+        step = 2;
+        continue;
+      }
+      if (isCancel(pkgsResult)) dieCancelled();
+      selected = pkgsResult;
+      step = 4;
+    }
 
-    const proceed = await confirm({ message: 'Configure these packages now?', initialValue: true });
-    if (isCancel(proceed)) dieCancelled();
-    if (!proceed) continue;
+    if (step === 4) {
+      const proceedCtrl = new AbortController();
+      const { result: proceedResult, wentBack: proceedBack } = await withBackspaceBack(proceedCtrl, () =>
+        confirm({ message: 'Configure these packages now?', initialValue: true, signal: proceedCtrl.signal })
+      );
+      if (proceedBack) {
+        step = 3;
+        continue;
+      }
+      if (isCancel(proceedResult)) dieCancelled();
+      if (!proceedResult) {
+        step = 2;
+        continue;
+      }
+      step = 5;
+    }
+
+    if (step !== 5) continue;
+
+    // Build per-package plan/config
+    perPackage = { security: null, secrets: null, sound: null, notification: null };
+
+    const packageDescs = {
+      security: 'Warn/block risky commands',
+      secrets: 'Detect secret-like tokens',
+      sound: 'Play sounds for key events',
+      notification: 'OS notifications for key events'
+    };
+
+    const formatPackageList = (/** @type {string | null} */ highlightKey) =>
+      selected
+        .map(
+          (k) => {
+            const desc = pc.dim(packageDescs[k] || '');
+            const label = highlightKey === k ? pc.cyan(pc.bold(k)) : pc.bold(k);
+            return `${label}: ${desc}`;
+          }
+        )
+        .join('\n');
+
+    // ── Step 4/5: configure (highlight current package) ──
+    if (selected.includes('security')) {
+      note(formatPackageList('security'), `${pc.dim('Step 4/5')}  Configure packages`);
+      perPackage.security = await planSecuritySetup({ action, projectDir, ui: 'umbrella' });
+    }
+    if (selected.includes('secrets')) {
+      note(formatPackageList('secrets'), `${pc.dim('Step 4/5')}  Configure packages`);
+      perPackage.secrets = await planSecretsSetup({ action, projectDir, ui: 'umbrella' });
+    }
+    if (selected.includes('sound')) {
+      note(formatPackageList('sound'), `${pc.dim('Step 4/5')}  Configure packages`);
+      perPackage.sound = await planSoundSetup({ action, projectDir, ui: 'umbrella' });
+    }
+    if (selected.includes('notification')) {
+      note(formatPackageList('notification'), `${pc.dim('Step 4/5')}  Configure packages`);
+      perPackage.notification = await planNotificationSetup({ action, projectDir, ui: 'umbrella' });
+    }
+
+    // ── Step 5/5: review ──
+    const files = [];
+    if (target === 'global') files.push(configPathForScope('global', projectDir));
+    if (target === 'projectOnly') {
+      files.push(path.join(projectDir, CONFIG_FILENAME));
+      files.push(path.join(projectDir, 'claude-code-hooks.snippet.json (optional)'));
+    }
+
+    function summarizePlan(key, plan) {
+      if (!plan) return `${key}: (skipped)`;
+      if (action === 'uninstall') return `${key}: remove managed hooks`;
+
+      const events = plan.snippetHooks ? Object.keys(plan.snippetHooks) : [];
+      const list = events.slice(0, 5);
+      const tail = events.length > 5 ? ` +${events.length - 5} more` : '';
+      return `${key}: ${events.length} event(s)${events.length ? ` (${list.join(', ')}${tail})` : ''}`;
+    }
+
+    note(
+      [
+        `${pc.dim('Step 5/5')}  Review`,
+        '',
+        `Action: ${pc.bold(action)}`,
+        `Target: ${pc.bold(target === 'global' ? 'global settings' : 'project-only')}`,
+        '',
+        `${pc.bold('Packages')}`,
+        ...selected.map((k) => `  - ${summarizePlan(k, perPackage[k])}`),
+        '',
+        `${pc.bold('Files')}`,
+        ...files.map((f) => `  - ${f}`)
+      ].join('\n'),
+      'Review'
+    );
+
+    const applyCtrl = new AbortController();
+    const { result: applyResult, wentBack: applyBack } = await withBackspaceBack(applyCtrl, () =>
+      select({
+        message: 'Apply changes?',
+        options: [
+          { value: 'yes', label: 'Yes, apply' },
+          { value: 'cancel', label: 'Cancel (exit)' }
+        ],
+        signal: applyCtrl.signal
+      })
+    );
+    if (applyBack) {
+      step = 3;
+      continue;
+    }
+    if (isCancel(applyResult) || applyResult === 'cancel') dieCancelled('No changes made');
 
     break;
   }
-
-  // Build per-package plan/config
-  const perPackage = { security: null, secrets: null, sound: null, notification: null };
-
-  // ── Step 4/5: configure ──
-  note(
-    selected
-      .map(
-        (k) =>
-          `${pc.bold(k)}: ${pc.dim(
-            {
-              security: 'Warn/block risky commands',
-              secrets: 'Detect secret-like tokens',
-              sound: 'Play sounds for key events',
-              notification: 'OS notifications for key events'
-            }[k] || ''
-          )}`
-      )
-      .join('\n'),
-    `${pc.dim('Step 4/5')}  Configure packages`
-  );
-
-  if (selected.includes('security')) perPackage.security = await planSecuritySetup({ action, projectDir, ui: 'umbrella' });
-  if (selected.includes('secrets')) perPackage.secrets = await planSecretsSetup({ action, projectDir, ui: 'umbrella' });
-  if (selected.includes('sound')) perPackage.sound = await planSoundSetup({ action, projectDir, ui: 'umbrella' });
-  if (selected.includes('notification')) perPackage.notification = await planNotificationSetup({ action, projectDir, ui: 'umbrella' });
-
-  // ── Step 5/5: review ──
-  const files = [];
-  if (target === 'global') files.push(configPathForScope('global', projectDir));
-  if (target === 'projectOnly') {
-    files.push(path.join(projectDir, CONFIG_FILENAME));
-    files.push(path.join(projectDir, 'claude-code-hooks.snippet.json (optional)'));
-  }
-
-  function summarizePlan(key, plan) {
-    if (!plan) return `${key}: (skipped)`;
-    if (action === 'uninstall') return `${key}: remove managed hooks`;
-
-    const events = plan.snippetHooks ? Object.keys(plan.snippetHooks) : [];
-    const list = events.slice(0, 5);
-    const tail = events.length > 5 ? ` +${events.length - 5} more` : '';
-    return `${key}: ${events.length} event(s)${events.length ? ` (${list.join(', ')}${tail})` : ''}`;
-  }
-
-  note(
-    [
-      `${pc.dim('Step 5/5')}  Review`,
-      '',
-      `Action: ${pc.bold(action)}`,
-      `Target: ${pc.bold(target === 'global' ? 'global settings' : 'project-only')}`,
-      '',
-      `${pc.bold('Packages')}`,
-      ...selected.map((k) => `  - ${summarizePlan(k, perPackage[k])}`),
-      '',
-      `${pc.bold('Files')}`,
-      ...files.map((f) => `  - ${f}`)
-    ].join('\n'),
-    'Review'
-  );
-
-  const ok = await confirm({ message: 'Apply changes?', initialValue: true });
-  if (isCancel(ok) || !ok) dieCancelled('No changes made');
 
   if (target === 'projectOnly') {
     // Write project config
@@ -246,6 +350,9 @@ async function main() {
     if (!plan) continue;
     settings = await plan.applyToSettings(settings);
   }
+
+  // Remove legacy claude-sound hooks (from old standalone package) to avoid duplicates
+  settings = removeLegacyClaudeSoundHooks(settings);
 
   await writeJson(settingsPath, settings);
 

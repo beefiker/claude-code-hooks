@@ -85,3 +85,44 @@ export function extractManagedHandlers(settings, { managedToken, events, modeReg
   }
   return byEvent;
 }
+
+/**
+ * Remove legacy claude-sound hooks (from the old standalone claude-sound package).
+ * Legacy commands reference "claude-sound" (the old bin) but not --managed-by @claude-code-hooks/sound.
+ * Call this at the end of apply to avoid duplicates when users migrated from claude-sound to @claude-code-hooks/sound.
+ *
+ * @param {object} settings - Claude settings object with hooks
+ * @returns {object} settings with legacy claude-sound handlers removed
+ */
+export function removeLegacyClaudeSoundHooks(settings) {
+  const LEGACY_PATTERN = /claude-sound/;
+  const MANAGED_TOKEN = '--managed-by @claude-code-hooks/sound';
+
+  const isLegacyClaudeSoundCommand = (cmd) =>
+    typeof cmd === 'string' && LEGACY_PATTERN.test(cmd) && !cmd.includes(MANAGED_TOKEN);
+
+  const out = { ...(settings || {}) };
+  out.hooks = { ...(out.hooks || {}) };
+
+  for (const [eventName, groups] of Object.entries(out.hooks)) {
+    if (!Array.isArray(groups)) continue;
+
+    const newGroups = [];
+    for (const g of groups) {
+      const handlers = Array.isArray(g?.hooks) ? g.hooks : [];
+      const kept = handlers.filter((h) => !isLegacyClaudeSoundCommand(h?.command));
+      if (kept.length > 0) {
+        newGroups.push({ ...g, hooks: kept });
+      }
+    }
+
+    if (newGroups.length > 0) out.hooks[eventName] = newGroups;
+    else delete out.hooks[eventName];
+  }
+
+  if (out.hooks && Object.keys(out.hooks).length === 0) {
+    delete out.hooks;
+  }
+
+  return out;
+}

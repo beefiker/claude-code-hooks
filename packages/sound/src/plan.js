@@ -1,4 +1,4 @@
-import { intro, multiselect, select, isCancel, cancel, note } from '@clack/prompts';
+import { intro, multiselect, select, text, spinner, isCancel, cancel, note } from '@clack/prompts';
 import { ansi as pc, configPathForScope, readJsonIfExists } from '@claude-code-hooks/core';
 import {
   HOOK_EVENTS,
@@ -6,8 +6,9 @@ import {
   buildManagedCommand,
   getExistingManagedMappings
 } from './hooks.js';
-import { ensureSoundsLoaded, listSoundsGrouped } from './sounds.js';
+import { ensureSoundsLoaded, listSoundsGrouped, invalidateSoundCache } from './sounds.js';
 import { selectWithSoundPreview } from './select-with-preview.js';
+import { generateTts } from './tts.js';
 
 function dieCancelled(msg = 'Cancelled') {
   cancel(msg);
@@ -43,7 +44,8 @@ const CATEGORY_OPTIONS = [
   { value: 'common', label: 'Common' },
   { value: 'game', label: 'Game' },
   { value: 'ring', label: 'Ring' },
-  { value: 'custom', label: 'Custom' }
+  { value: 'custom', label: 'Custom (TTS & imported)' },
+  { value: '__create__', label: 'Create my own (text-to-speech)' }
 ];
 
 export async function planInteractiveSetup({ action, projectDir, ui = 'standalone' }) {
@@ -128,8 +130,10 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
   const mappings = {};
 
   for (const eventName of enabledEvents) {
-    // Pick category first (grouped UI)
-    const availableCats = CATEGORY_OPTIONS.filter((c) => (grouped[c.value]?.length ?? 0) > 0);
+    // Pick category first (grouped UI). __create__ is always available for TTS.
+    const availableCats = CATEGORY_OPTIONS.filter(
+      (c) => c.value === '__create__' || (grouped[c.value]?.length ?? 0) > 0
+    );
 
     const cat = await select({
       message: `[sound] Category for ${pc.bold(eventName)}`,
@@ -137,16 +141,59 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
     });
     if (isCancel(cat)) dieCancelled();
 
-    const ids = grouped[cat] || [];
+    let soundId;
 
-    // Show label mainly; fall back to filename.
-    const options = ids.map((id) => ({ value: id, label: displaySoundId(id, labels), hint: labels?.[id] ? id : undefined }));
+    if (cat === '__create__') {
+      // TTS flow: language → text → generate
+      const langChoice = await select({
+        message: `[sound] Language for TTS (${eventName})`,
+        options: [
+          { value: 'en', label: 'English (default)' },
+          { value: 'ko', label: 'Korean (한국어)' }
+        ]
+      });
+      if (isCancel(langChoice)) dieCancelled();
 
-    const soundId = await selectWithSoundPreview({
-      message: `[sound] Sound for ${pc.bold(eventName)}`,
-      options
-    });
-    if (isCancel(soundId)) dieCancelled();
+      const textInput = await text({
+        message: `[sound] Enter text to speak${langChoice === 'ko' ? ' (e.g. "클로드가 준비됐어요!")' : ' (e.g. "Claude is ready!")'}`,
+        placeholder: langChoice === 'ko' ? '클로드가 준비됐어요!' : 'Claude is ready!',
+        validate: (v) => {
+          if (!v?.trim()) return 'Text cannot be empty';
+          if (v.length > 200) return 'Keep it under 200 characters';
+          return undefined;
+        }
+      });
+      if (isCancel(textInput)) dieCancelled();
+
+      const s = spinner();
+      s.start('Generating speech...');
+      try {
+        const result = await generateTts(textInput, { lang: langChoice });
+        invalidateSoundCache();
+        await ensureSoundsLoaded(); // Rebuild cache so selectWithSoundPreview works for next event
+        soundId = result.soundId;
+        s.stop('Done');
+      } catch (err) {
+        s.stop('Failed');
+        note(String(err?.message ?? err), 'Error');
+        continue;
+      }
+    } else {
+      await ensureSoundsLoaded(); // Ensure cache is ready for playSoundPreview (may have been invalidated by TTS)
+      const ids = grouped[cat] || [];
+      const options = ids.map((id) => ({
+        value: id,
+        label: displaySoundId(id, labels),
+        hint: labels?.[id] ? id : undefined
+      }));
+
+      soundId = await selectWithSoundPreview({
+        message: `[sound] Sound for ${pc.bold(eventName)}`,
+        options
+      });
+      if (isCancel(soundId)) dieCancelled();
+    }
+
     if (soundId) mappings[eventName] = String(soundId);
   }
 

@@ -18,6 +18,8 @@ From anywhere:
 npx @claude-code-hooks/cli@latest
 ```
 
+![CLI install and usage demo](images/claude-code-hooks-cli.gif)
+
 ## Install / run (sound)
 
 From anywhere:

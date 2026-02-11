@@ -14,7 +14,8 @@ export {
   isManagedCommand,
   removeManagedHandlers,
   addManagedHandler,
-  extractManagedHandlers
+  extractManagedHandlers,
+  removeLegacyClaudeSoundHooks
 } from './claude-settings.js';
 
 export { SCOPE_OPTIONS, applyManagedHandlersForEvents, upsertConfigSection } from './setup-flow.js';
