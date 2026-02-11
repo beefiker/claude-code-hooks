@@ -114,7 +114,7 @@ async function interactiveSetup() {
   intro('claude-sound');
 
   const scope = await select({
-    message: 'Where do you want to write Claude Code hook settings?',
+    message: 'Write hook settings to:',
     options: [
       { value: 'project', label: 'Project (shared): .claude/settings.json' },
       { value: 'projectLocal', label: 'Project (local): .claude/settings.local.json (gitignored)' },

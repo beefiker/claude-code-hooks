@@ -25,7 +25,7 @@ export async function interactiveSetup() {
 
   // ── Scope ──────────────────────────────────────────────────────────
   const scope = await select({
-    message: 'Where do you want to write Claude Code hook settings?',
+    message: 'Write hook settings to:',
     options: SCOPE_OPTIONS
   });
 
@@ -37,11 +37,11 @@ export async function interactiveSetup() {
   // ── Mode ───────────────────────────────────────────────────────────
   const defaultMode = existingCfg?.mode || 'warn';
   const mode = await select({
-    message: 'How should claude-security behave when it detects a risk?',
+    message: 'When a risky command is detected…',
     initialValue: defaultMode,
     options: [
-      { value: 'warn', label: `Warn only ${pc.dim('(recommended to start)')}` },
-      { value: 'block', label: `Block (exit 2) ${pc.dim('(may interrupt workflows)')}` }
+      { value: 'warn', label: 'Warn (recommended)' },
+      { value: 'block', label: 'Block (exit 2)', hint: 'May interrupt workflows' }
     ]
   });
 
@@ -53,7 +53,7 @@ export async function interactiveSetup() {
   // ── Events ─────────────────────────────────────────────────────────
   const defaultEvents = existingCfg?.enabledEvents || HOOK_EVENTS;
   const enabledEvents = await multiselect({
-    message: 'Which events should be guarded?',
+    message: 'Events to guard',
     options: HOOK_EVENTS.map((e) => ({ value: e, label: e })),
     initialValues: defaultEvents.filter((e) => HOOK_EVENTS.includes(e)),
     required: false
@@ -66,7 +66,7 @@ export async function interactiveSetup() {
 
   // ── Apply / Remove ─────────────────────────────────────────────────
   const action = await select({
-    message: 'Apply or remove?',
+    message: 'Apply changes or uninstall?',
     options: [
       { value: 'apply', label: 'Apply (write settings)' },
       { value: 'remove', label: 'Remove all claude-security hooks' },

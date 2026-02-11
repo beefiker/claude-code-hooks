@@ -44,11 +44,11 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
 
   const defaultMode = existingCfg?.mode || 'warn';
   const mode = await select({
-    message: '[secrets] How should it behave when it detects a secret-like token?',
+    message: `${pc.bold('secrets')}  When a secret-like token is found…`,
     initialValue: defaultMode,
     options: [
-      { value: 'warn', label: `Warn only ${pc.dim('(recommended)')}` },
-      { value: 'block', label: `Block on HIGH only ${pc.dim('(private key material)')}` }
+      { value: 'warn', label: `Warn (recommended)` },
+      { value: 'block', label: `Block HIGH findings (exit 2)`, hint: 'Private key material' }
     ]
   });
   if (isCancel(mode)) dieCancelled();
@@ -62,7 +62,7 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
 
   const defaultEvents = existingCfg?.enabledEvents || HOOK_EVENTS;
   const enabledEvents = await multiselect({
-    message: '[secrets] Which events should be scanned?',
+    message: `${pc.bold('secrets')}  Events to scan`,
     options: HOOK_EVENTS.map((e) => ({ value: e, label: `${e} ${pc.dim('—')} ${pc.dim(eventDescs[e] || '')}` })),
     initialValues: defaultEvents.filter((e) => HOOK_EVENTS.includes(e)),
     required: false
@@ -71,7 +71,7 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
 
   const defaultScanGitCommit = existingCfg?.scanGitCommit ?? false;
   const scanGitCommit = await confirm({
-    message: '[secrets] Scan staged files for secrets on git commit?',
+    message: `${pc.bold('secrets')}  Scan staged files on ${pc.bold('git commit')}?`,
     initialValue: defaultScanGitCommit
   });
   if (isCancel(scanGitCommit)) dieCancelled();

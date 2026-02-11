@@ -43,7 +43,7 @@ function dieCancelled(msg = 'Cancelled') {
 
 function usage(exitCode = 0) {
   process.stdout.write(`\
-claude-code-hooks\n\nUsage:\n  npx @claude-code-hooks/cli@latest\n\nNotes:\n  - This wizard can update your Claude Code settings (global) or generate project-only config + snippet.\n`);
+claude-code-hooks\n\nUsage:\n  claude-code-hooks\n  npx @claude-code-hooks/cli@latest\n\nWhat it does:\n  - Update Claude Code settings (global), or generate a project-only config + pasteable snippet.\n`);
   process.exit(exitCode);
 }
 
@@ -66,7 +66,7 @@ async function ensureProjectOnlyConfig(projectDir, selected, perPackageConfig) {
 
 async function maybeWriteSnippet(projectDir, snippetObj) {
   const ok = await confirm({
-    message: `Write snippet file to ${pc.bold(path.join(projectDir, 'claude-code-hooks.snippet.json'))}?`,
+    message: `Write snippet file (${pc.bold('claude-code-hooks.snippet.json')}) to this project?`,
     initialValue: false
   });
   if (isCancel(ok)) return;
@@ -92,20 +92,20 @@ async function main() {
 
   while (true) {
     action = await select({
-      message: `${pc.dim('Step 1/5')}  Action`,
+      message: `${pc.dim('Step 1/5')}  Choose an action`,
       options: [
-        { value: 'setup', label: 'Setup / enable packages' },
-        { value: 'uninstall', label: 'Uninstall / remove managed hooks' },
+        { value: 'setup', label: 'Install / update packages' },
+        { value: 'uninstall', label: 'Uninstall (remove managed hooks)' },
         { value: 'exit', label: 'Exit' }
       ]
     });
     if (isCancel(action) || action === 'exit') dieCancelled('Bye');
 
     target = await select({
-      message: `${pc.dim('Step 2/5')}  Target`,
+      message: `${pc.dim('Step 2/5')}  Choose a target`,
       options: [
         { value: 'global', label: `Global (default): ${pc.dim('~/.claude/settings.json')}` },
-        { value: 'projectOnly', label: `Project-only: write ${pc.bold(CONFIG_FILENAME)} + print snippet` },
+        { value: 'projectOnly', label: `Project-only: write ${pc.bold(CONFIG_FILENAME)} + print a snippet` },
         { value: '__back__', label: 'Back' }
       ]
     });
@@ -113,18 +113,18 @@ async function main() {
     if (target === '__back__') continue;
 
     selected = await multiselect({
-      message: `${pc.dim('Step 3/5')}  Packages`,
+      message: `${pc.dim('Step 3/5')}  Select packages`,
       options: [
         { value: 'security', label: '@claude-code-hooks/security', hint: 'Warn/block risky commands' },
         { value: 'secrets', label: '@claude-code-hooks/secrets', hint: 'Detect secret-like tokens' },
-        { value: 'sound', label: '@claude-code-hooks/sound', hint: 'Play sounds on events' },
-        { value: 'notification', label: '@claude-code-hooks/notification', hint: 'OS notifications on events' }
+        { value: 'sound', label: '@claude-code-hooks/sound', hint: 'Play sounds for key events' },
+        { value: 'notification', label: '@claude-code-hooks/notification', hint: 'OS notifications for key events' }
       ],
       required: true
     });
     if (isCancel(selected)) dieCancelled();
 
-    const proceed = await confirm({ message: 'Continue to configure selected packages?', initialValue: true });
+    const proceed = await confirm({ message: 'Configure these packages now?', initialValue: true });
     if (isCancel(proceed)) dieCancelled();
     if (!proceed) continue;
 
@@ -136,8 +136,20 @@ async function main() {
 
   // ── Step 4/5: configure ──
   note(
-    selected.map((k) => `${pc.bold(k)}: ${pc.dim({ security: 'Warn/block risky commands', secrets: 'Detect secret-like tokens', sound: 'Play sounds on events', notification: 'OS notifications on events' }[k] || '')}`).join('\n'),
-    `${pc.dim('Step 4/5')}  Configure`
+    selected
+      .map(
+        (k) =>
+          `${pc.bold(k)}: ${pc.dim(
+            {
+              security: 'Warn/block risky commands',
+              secrets: 'Detect secret-like tokens',
+              sound: 'Play sounds for key events',
+              notification: 'OS notifications for key events'
+            }[k] || ''
+          )}`
+      )
+      .join('\n'),
+    `${pc.dim('Step 4/5')}  Configure packages`
   );
 
   if (selected.includes('security')) perPackage.security = await planSecuritySetup({ action, projectDir, ui: 'umbrella' });
@@ -179,8 +191,8 @@ async function main() {
     'Review'
   );
 
-  const ok = await confirm({ message: 'Apply?', initialValue: true });
-  if (isCancel(ok) || !ok) dieCancelled('No changes written');
+  const ok = await confirm({ message: 'Apply changes?', initialValue: true });
+  if (isCancel(ok) || !ok) dieCancelled('No changes made');
 
   if (target === 'projectOnly') {
     // Write project config
@@ -209,7 +221,7 @@ async function main() {
 
     s.stop('Done');
 
-    note(JSON.stringify(snippetObj, null, 2), 'Paste into ~/.claude/settings.json');
+    note(JSON.stringify(snippetObj, null, 2), 'Paste into ~/.claude/settings.json (global)');
     await maybeWriteSnippet(projectDir, snippetObj);
 
     outro(`Project config written: ${pc.bold(configFilePath(projectDir))}`);

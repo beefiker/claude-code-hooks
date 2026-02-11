@@ -6,6 +6,7 @@ Right now this repo contains:
 
 - `packages/cli` → **@claude-code-hooks/cli**: umbrella wizard to setup/uninstall hook packages.
 - `packages/sound` → **@claude-code-hooks/sound**: configure Claude Code hooks to play notification sounds.
+- `packages/notification` → **@claude-code-hooks/notification**: show OS notifications on Claude Code hook events.
 - `packages/security` → **@claude-code-hooks/security**: warn/block risky commands and tool invocations.
 - `packages/secrets` → **@claude-code-hooks/secrets**: warn/block secret-like tokens (keys, private keys) in tool inputs.
 
@@ -23,6 +24,14 @@ From anywhere:
 
 ```bash
 npx @claude-code-hooks/sound@latest
+```
+
+## Install / run (notification)
+
+From anywhere:
+
+```bash
+npx @claude-code-hooks/notification@latest
 ```
 
 From this repo (workspace dev):

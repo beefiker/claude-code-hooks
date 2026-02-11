@@ -52,11 +52,11 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
 
   const defaultMode = existingCfg?.mode || 'warn';
   const mode = await select({
-    message: '[security] How should it behave when it detects a risk?',
+    message: `${pc.bold('security')}  When a risky command is detected…`,
     initialValue: defaultMode,
     options: [
-      { value: 'warn', label: `Warn only ${pc.dim('(recommended)')}` },
-      { value: 'block', label: `Block on PreToolUse only ${pc.dim('(exit 2)')}` }
+      { value: 'warn', label: 'Warn (recommended)' },
+      { value: 'block', label: 'Block on PreToolUse (exit 2)' }
     ]
   });
   if (isCancel(mode)) dieCancelled();
@@ -70,7 +70,7 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
 
   const defaultEvents = existingCfg?.enabledEvents || HOOK_EVENTS;
   const enabledEvents = await multiselect({
-    message: '[security] Which events should be guarded?',
+    message: `${pc.bold('security')}  Events to guard`,
     options: HOOK_EVENTS.map((e) => ({ value: e, label: `${e} ${pc.dim('—')} ${pc.dim(eventDescs[e] || '')}` })),
     initialValues: defaultEvents.filter((e) => HOOK_EVENTS.includes(e)),
     required: false

@@ -23,7 +23,7 @@ export async function interactiveSetup() {
   }
 
   const scope = await select({
-    message: 'Where do you want to write Claude Code hook settings?',
+    message: 'Write hook settings to:',
     options: SCOPE_OPTIONS
   });
 
@@ -34,11 +34,11 @@ export async function interactiveSetup() {
 
   const defaultMode = existingCfg?.mode || 'warn';
   const mode = await select({
-    message: 'How should claude-secrets behave when it detects secret-like tokens?',
+    message: 'When a secret-like token is found…',
     initialValue: defaultMode,
     options: [
-      { value: 'warn', label: `Warn only ${pc.dim('(recommended to start)')}` },
-      { value: 'block', label: `Block private-key findings (exit 2) ${pc.dim('(HIGH only)')}` }
+      { value: 'warn', label: 'Warn (recommended)' },
+      { value: 'block', label: 'Block HIGH findings (exit 2)', hint: 'Private key material' }
     ]
   });
 
@@ -49,7 +49,7 @@ export async function interactiveSetup() {
 
   const defaultEvents = existingCfg?.enabledEvents || HOOK_EVENTS;
   const enabledEvents = await multiselect({
-    message: 'Which events should be guarded?',
+    message: 'Events to scan',
     options: HOOK_EVENTS.map((e) => ({ value: e, label: e })),
     initialValues: defaultEvents.filter((e) => HOOK_EVENTS.includes(e)),
     required: false
@@ -62,7 +62,7 @@ export async function interactiveSetup() {
 
   const defaultScanGitCommit = existingCfg?.scanGitCommit ?? false;
   const scanGitCommit = await confirm({
-    message: 'Scan staged files for secrets on git commit?',
+    message: `Scan staged files on ${pc.bold('git commit')}?`,
     initialValue: defaultScanGitCommit
   });
 
@@ -72,7 +72,7 @@ export async function interactiveSetup() {
   }
 
   const action = await select({
-    message: 'Apply or remove?',
+    message: 'Apply changes or uninstall?',
     options: [
       { value: 'apply', label: 'Apply (write settings)' },
       { value: 'remove', label: 'Remove all claude-secrets hooks' },

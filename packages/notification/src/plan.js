@@ -81,7 +81,7 @@ export async function planInteractiveSetup({ action, projectDir, ui = 'standalon
   }
 
   const enabledEvents = await multiselect({
-    message: '[notification] Which events should show OS notifications?',
+    message: `${pc.bold('notification')}  Events that should show OS notifications`,
     options: eventOptions,
     required: false
   });
