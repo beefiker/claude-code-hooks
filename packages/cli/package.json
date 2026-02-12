@@ -1,6 +1,6 @@
 {
   "name": "@claude-code-hooks/cli",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "description": "Wizard CLI to set up and manage @claude-code-hooks packages for Claude Code.",
   "license": "MIT",
   "homepage": "https://github.com/beefiker/claude-code-hooks/tree/main/packages/cli",
@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^1.0.0",
-    "@claude-code-hooks/core": "^0.1.4",
+    "@claude-code-hooks/core": "^0.1.10",
     "@claude-code-hooks/security": "^0.1.8",
     "@claude-code-hooks/secrets": "^0.1.9",
     "@claude-code-hooks/sound": "^0.2.12",
