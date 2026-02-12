@@ -27,6 +27,13 @@ if (process.stdin.isTTY) {
   readline.emitKeypressEvents(process.stdin);
 }
 
+// Restore terminal if process exits while stdin is in raw mode (e.g. crash mid-prompt)
+process.on('exit', () => {
+  if (process.stdin.isTTY && process.stdin.isRaw) {
+    process.stdin.setRawMode(false);
+  }
+});
+
 import {
   ansi as pc,
   configPathForScope,
