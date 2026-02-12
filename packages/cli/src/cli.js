@@ -406,8 +406,8 @@ async function main() {
     notification: t('cli.pkgNotification')
   };
   const s = spinner();
+  s.start(t('cli.applyingChanges'));
 
-  s.start(t('cli.applyStepReadSettings'));
   const res = await readJsonIfExists(settingsPath);
   if (!res.ok) {
     s.stop(t('cli.done'));
@@ -415,37 +415,52 @@ async function main() {
     process.exit(1);
   }
   let settings = res.value;
-  s.stop(t('cli.done'));
 
   for (const key of selected) {
     const plan = perPackage[key];
     if (!plan) continue;
     const pkgName = pkgLabels[key] ?? key;
-    s.start(t('cli.applyStepApplyPackage', { packageName: pkgName }));
+    s.message(t('cli.applyStepApplyPackage', { packageName: pkgName }));
     settings = await plan.applyToSettings(settings);
-    s.stop(t('cli.done'));
   }
 
-  s.start(t('cli.applyStepWriteSettings'));
+  s.message(t('cli.applyStepWriteSettings'));
   settings = removeLegacyClaudeSoundHooks(settings);
   await writeJson(settingsPath, settings);
   if (target === 'projectLocal') {
     await ensureGitignoreLocalEntry(projectDir);
   }
-  s.stop(t('cli.done'));
 
   if (action === 'setup') {
-    s.start(t('cli.applyStepWriteProjectConfig'));
+    s.message(t('cli.applyStepWriteProjectConfig'));
     await ensureProjectOnlyConfig(projectDir, selected, {
       security: perPackage.security?.projectConfigSection,
       secrets: perPackage.secrets?.projectConfigSection,
       sound: perPackage.sound?.projectConfigSection,
       notification: perPackage.notification?.projectConfigSection
     });
-    s.stop(t('cli.done'));
+  }
+  s.stop('');
+
+  // Build contextual completion note
+  const traits = [];
+  if (selected.includes('security') || selected.includes('secrets')) traits.push(t('cli.doneTraitSafer'));
+  if (selected.includes('sound')) traits.push(t('cli.doneTraitLouder'));
+  if (selected.includes('notification')) traits.push(t('cli.doneTraitAttentive'));
+
+  const lines = [];
+  lines.push(`${t('cli.saved')}: ${pc.cyan(settingsPath)}`);
+  lines.push(`${t('cli.reviewPackages')}: ${selected.map((k) => pc.green(pkgLabels[k] ?? k)).join(', ')}`);
+
+  if (traits.length > 0) {
+    const joined = traits.length === 1
+      ? traits[0]
+      : traits.slice(0, -1).join(', ') + ' & ' + traits[traits.length - 1];
+    lines.push('');
+    lines.push(pc.bold(t('cli.doneWithTraits', { traits: joined })));
   }
 
-  outro(`${t('cli.saved')}: ${pc.bold(settingsPath)}`);
+  note(lines.join('\n'), t('cli.doneNoteTitle'));
 }
 
 main().catch((err) => {
