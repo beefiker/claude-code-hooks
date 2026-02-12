@@ -97,7 +97,7 @@ function showWelcome() {
   process.stdout.write(particleLine(0));
   process.stdout.write(line + pad);
   process.stdout.write(pad);
-  process.stdout.write(`  ${icon}  ${pc.blue(pc.bold('claude-code-hooks'))}${version ? pc.gray(version) : ''}\n`);
+  process.stdout.write(`  ${icon}  ${pc.blue(pc.bold(t('cli.welcomeTitle')))}${version ? pc.gray(version) : ''}\n`);
   process.stdout.write(pad);
   process.stdout.write(`  ${pc.brightCyan('Customize Claude Code with zero dependencies')}\n`);
   process.stdout.write(pad);
@@ -206,9 +206,12 @@ async function main() {
   const projectDir = process.cwd();
 
   showWelcome();
-  note(t('cli.navHint'), t('cli.navTitle'));
 
-  // ── Step 1–3: action, target, packages (Backspace = go to previous step) ──
+  /** Build step header: "Step N/5 — <title> (ESC exit · Backspace back)" */
+  const stepHeader = (n, title) =>
+    pc.dim(t('cli.stepHeader', { n, title, suffix: t('cli.stepHeaderSuffix') }));
+
+  // ── Step 1–5: action, target, packages, configure, review (Backspace = go to previous step) ──
   let action;
   let target;
   let selected;
@@ -226,7 +229,7 @@ async function main() {
   while (true) {
     if (step === 1) {
       action = await select({
-        message: `${pc.dim(t('cli.stepFormat', { n: 1 }))}  ${t('cli.step1ChooseAction')}`,
+        message: stepHeader(1, t('cli.step1ChooseAction')),
         options: [
           { value: 'setup', label: t('cli.actionSetup') },
           { value: 'uninstall', label: t('cli.actionUninstall') },
@@ -241,7 +244,7 @@ async function main() {
       const targetCtrl = new AbortController();
       const { result: targetResult, wentBack: targetBack } = await withBackspaceBack(targetCtrl, () =>
         select({
-          message: `${pc.dim(t('cli.stepFormat', { n: 2 }))}  ${t('cli.step2ChooseTarget')}`,
+          message: stepHeader(2, t('cli.step2ChooseTarget')),
           options: [
             { value: 'global', label: t('cli.targetGlobal') },
             { value: 'project', label: t('common.scopeProject') },
@@ -263,7 +266,7 @@ async function main() {
       const pkgsCtrl = new AbortController();
       const { result: pkgsResult, wentBack: pkgsBack } = await withBackspaceBack(pkgsCtrl, () =>
         multiselect({
-          message: `${pc.dim(t('cli.stepFormat', { n: 3 }))}  ${t('cli.step3SelectPackages')}`,
+          message: stepHeader(3, t('cli.step3SelectPackages')),
           options: packageOptions,
           required: true,
           validate: (v) => (!v || v.length === 0) ? t('common.selectAtLeastOne') : true,
@@ -282,7 +285,7 @@ async function main() {
     if (step === 4) {
       const proceedCtrl = new AbortController();
       const { result: proceedResult, wentBack: proceedBack } = await withBackspaceBack(proceedCtrl, () =>
-        confirm({ message: t('cli.configureNow'), initialValue: true, active: t('common.yes'), inactive: t('common.no'), signal: proceedCtrl.signal })
+        confirm({ message: stepHeader(4, t('cli.configureNow')), initialValue: true, active: t('common.yes'), inactive: t('common.no'), signal: proceedCtrl.signal })
       );
       if (proceedBack) {
         step = 3;
@@ -321,19 +324,19 @@ async function main() {
 
     // ── Step 4/5: configure (highlight current package) ──
     if (selected.includes('security')) {
-      note(formatPackageList('security'), `${pc.dim(t('cli.stepFormat', { n: 4 }))}  ${t('cli.step4Configure')}`);
+      note(formatPackageList('security'), stepHeader(4, t('cli.step4Configure')));
       perPackage.security = await planSecuritySetup({ action, projectDir, ui: 'umbrella' });
     }
     if (selected.includes('secrets')) {
-      note(formatPackageList('secrets'), `${pc.dim(t('cli.stepFormat', { n: 4 }))}  ${t('cli.step4Configure')}`);
+      note(formatPackageList('secrets'), stepHeader(4, t('cli.step4Configure')));
       perPackage.secrets = await planSecretsSetup({ action, projectDir, ui: 'umbrella' });
     }
     if (selected.includes('sound')) {
-      note(formatPackageList('sound'), `${pc.dim(t('cli.stepFormat', { n: 4 }))}  ${t('cli.step4Configure')}`);
+      note(formatPackageList('sound'), stepHeader(4, t('cli.step4Configure')));
       perPackage.sound = await planSoundSetup({ action, projectDir, ui: 'umbrella' });
     }
     if (selected.includes('notification')) {
-      note(formatPackageList('notification'), `${pc.dim(t('cli.stepFormat', { n: 4 }))}  ${t('cli.step4Configure')}`);
+      note(formatPackageList('notification'), stepHeader(4, t('cli.step4Configure')));
       perPackage.notification = await planNotificationSetup({ action, projectDir, ui: 'umbrella' });
     }
 
@@ -355,10 +358,11 @@ async function main() {
 
     note(
       [
-        `${pc.dim(t('cli.stepFormat', { n: 5 }))}  ${t('cli.step5Review')}`,
+        stepHeader(5, t('cli.step5Review')),
         '',
-        `${t('cli.reviewAction')}: ${pc.bold(action)}`,
-        `${t('cli.reviewTarget')}: ${pc.bold(
+        `${pc.bold(t('cli.reviewSectionActionTarget'))}`,
+        `  ${t('cli.reviewAction')}: ${pc.bold(action)}`,
+        `  ${t('cli.reviewTarget')}: ${pc.bold(
           target === 'global' ? t('cli.reviewTargetGlobal') :
           target === 'project' ? t('cli.reviewTargetProject') :
           t('cli.reviewTargetProjectLocal')
@@ -373,10 +377,10 @@ async function main() {
       t('cli.step5Review')
     );
 
-    const applyCtrl = new AbortController();
+      const applyCtrl = new AbortController();
     const { result: applyResult, wentBack: applyBack } = await withBackspaceBack(applyCtrl, () =>
       select({
-        message: t('cli.applyChanges'),
+        message: stepHeader(5, t('cli.applyChanges')),
         options: [
           { value: 'yes', label: t('cli.applyYes') },
           { value: 'cancel', label: t('cli.applyCancel') }
@@ -395,34 +399,40 @@ async function main() {
 
   // Global / project / projectLocal apply: read settings.json, apply transforms, write once.
   const settingsPath = configPathForScope(target, projectDir);
+  const pkgLabels = {
+    security: t('cli.pkgSecurity'),
+    secrets: t('cli.pkgSecrets'),
+    sound: t('cli.pkgSound'),
+    notification: t('cli.pkgNotification')
+  };
+  const s = spinner();
+  s.start(t('cli.applyingChanges'));
+
   const res = await readJsonIfExists(settingsPath);
   if (!res.ok) {
+    s.stop(t('cli.done'));
     cancel(t('cli.couldNotReadJson', { path: settingsPath }));
     process.exit(1);
   }
-
   let settings = res.value;
-
-  const s = spinner();
-  s.start(t('cli.applyingChanges'));
 
   for (const key of selected) {
     const plan = perPackage[key];
     if (!plan) continue;
+    const pkgName = pkgLabels[key] ?? key;
+    s.message(t('cli.applyStepApplyPackage', { packageName: pkgName }));
     settings = await plan.applyToSettings(settings);
   }
 
-  // Remove legacy claude-sound hooks (from old standalone package) to avoid duplicates
+  s.message(t('cli.applyStepWriteSettings'));
   settings = removeLegacyClaudeSoundHooks(settings);
-
   await writeJson(settingsPath, settings);
-
   if (target === 'projectLocal') {
     await ensureGitignoreLocalEntry(projectDir);
   }
 
-  // Update project config only on setup.
   if (action === 'setup') {
+    s.message(t('cli.applyStepWriteProjectConfig'));
     await ensureProjectOnlyConfig(projectDir, selected, {
       security: perPackage.security?.projectConfigSection,
       secrets: perPackage.secrets?.projectConfigSection,
@@ -430,9 +440,27 @@ async function main() {
       notification: perPackage.notification?.projectConfigSection
     });
   }
+  s.stop('');
 
-  s.stop(t('cli.done'));
-  outro(`${t('cli.saved')}: ${pc.bold(settingsPath)}`);
+  // Build contextual completion note
+  const traits = [];
+  if (selected.includes('security') || selected.includes('secrets')) traits.push(t('cli.doneTraitSafer'));
+  if (selected.includes('sound')) traits.push(t('cli.doneTraitLouder'));
+  if (selected.includes('notification')) traits.push(t('cli.doneTraitAttentive'));
+
+  const lines = [];
+  lines.push(`${t('cli.saved')}: ${pc.cyan(settingsPath)}`);
+  lines.push(`${t('cli.reviewPackages')}: ${selected.map((k) => pc.green(pkgLabels[k] ?? k)).join(', ')}`);
+
+  if (traits.length > 0) {
+    const joined = traits.length === 1
+      ? traits[0]
+      : traits.slice(0, -1).join(', ') + ' & ' + traits[traits.length - 1];
+    lines.push('');
+    lines.push(pc.bold(t('cli.doneWithTraits', { traits: joined })));
+  }
+
+  note(lines.join('\n'), t('cli.doneNoteTitle'));
 }
 
 main().catch((err) => {
