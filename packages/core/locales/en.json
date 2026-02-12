@@ -6,7 +6,10 @@
     "noChanges": "No changes made",
     "navHint": "ESC to exit  •  Backspace to go back",
     "navTitle": "Navigation",
+    "stepHeaderSuffix": "ESC exit · Backspace back",
     "stepFormat": "Step {{n}}/5",
+    "stepHeader": "Step {{n}}/5 — {{title}} ({{suffix}})",
+    "welcomeTitle": "Claude Code Hooks Wizard",
     "step1ChooseAction": "Choose an action",
     "step2ChooseTarget": "Choose a target",
     "step3SelectPackages": "Select packages",
@@ -32,6 +35,7 @@
     "couldNotReadJson": "Could not read/parse JSON at {{path}}",
     "applyingChanges": "Applying changes...",
     "saved": "Saved",
+    "reviewSectionActionTarget": "Action / Target",
     "reviewAction": "Action",
     "reviewTarget": "Target",
     "reviewTargetGlobal": "global settings",
@@ -41,7 +45,11 @@
     "reviewFiles": "Files",
     "summarySkipped": "(skipped)",
     "summaryRemoveHooks": "remove managed hooks",
-    "summaryEvents": "{{count}} event(s)"
+    "summaryEvents": "{{count}} event(s)",
+    "applyStepReadSettings": "Reading settings",
+    "applyStepApplyPackage": "Applying {{packageName}}",
+    "applyStepWriteSettings": "Writing settings",
+    "applyStepWriteProjectConfig": "Writing project config"
   },
   "common": {
     "scopeWriteTo": "Write hook settings to:",
